@@ -1,4 +1,6 @@
+using Application;
 using Blazor.Components;
+using Infrastructure;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddMudServices();
+builder.Services.AddTransient<IAuthenticationService, AuthenticationService>();
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

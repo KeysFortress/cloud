@@ -1,9 +1,12 @@
+@using Infrastructure;
+
 @inject IJSRuntime JSRuntime
+@inject IAuthenticationService AuthenticationService;
 
 
 <MudCard style="width: 100%">
     <MudCardContent class="column">
-        <MudElement >
+        <MudElement>
             <div id="qrcode"></div>
         </MudElement>
         <div style="height: 16px"></div>
@@ -13,45 +16,41 @@
         <MudText Typo="Typo.body2">@Email</MudText>
     </MudCardContent>
     <MudCardActions style="justify-content: center;">
-        <MudButton
-            Target="_blank"
-            Variant="Variant.Text"
-            Color="Color.Secondary"
-            Style="text-transform:none">
+        <MudButton Target="_blank" Variant="Variant.Text" Color="Color.Secondary" Style="text-transform:none">
             Recover account
         </MudButton>
-        <div style="width: 16px"/>
+        <div style="width: 16px" />
         <MudButton Variant="Variant.Filled" Color="Color.Primary">Login with passkey</MudButton>
     </MudCardActions>
 </MudCard>
 
 
 <script type="text/javascript">
-function onRenderComplete()
-{
+    function onRenderComplete() {
 
-    new QRCode(document.getElementById("qrcode"), "http://jindo.dev.naver.com/collie");
+        new QRCode(document.getElementById("qrcode"), "http://jindo.dev.naver.com/collie");
 
-    var qrcode = new QRCode("test", {
-        text: "http://jindo.dev.naver.com/collie",
-        width: 128,
-        height: 128,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
-    });
-}
+        var qrcode = new QRCode("test", {
+            text: "http://jindo.dev.naver.com/collie",
+            width: 128,
+            height: 128,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }
 
 </script>
 
 
-@code{
+@code {
     [Parameter] public string Email { get; set; }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            var code = await AuthenticationService.InitLogin();
+            Console.WriteLine(code);
             await JSRuntime.InvokeVoidAsync("onRenderComplete", null);
         }
     }
