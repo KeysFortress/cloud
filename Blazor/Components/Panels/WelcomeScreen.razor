@@ -1,0 +1,31 @@
+<MudCard style="width: 100%">
+    <MudCardContent class="column">
+
+        <div style="height: 16px"></div>
+        <MudText Typo="Typo.h5">Welcome back</MudText>
+        <MudTextField Label="Outlined" Required="true" T="string" FullWidth="true" AutoFocus="true"
+                      Variant="Variant.Outlined"
+                      @bind-Value="@Email">
+        </MudTextField>
+
+    </MudCardContent>
+    <MudCardActions style="justify-content: center;">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@OnNextPressed">Next</MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code
+{
+    String Email { get; set; } = "";
+
+    [Parameter] public EventCallback<string> OnEmailEntered { get; set; }
+
+    void OnNextPressed()
+    {
+        if (string.IsNullOrEmpty(Email)) return;
+
+        OnEmailEntered.InvokeAsync(Email);
+    }
+
+
+}

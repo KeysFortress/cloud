@@ -1,20 +1,25 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
+<style>
+    .centerLoginPanel{
+        display: flex;
+        width: 100%;
+        flex-wrap: wrap;
+        align-content: center;
+        align-items: center;
+        justify-content: space-between;
+        flex-direction: row;
+    }
+</style>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
+<MudLayout>
+    <MudMainContent MaxWidth="@MaxWidth.Large" Class="mud-theme-secondary" style="height: 100%; display: flex;">
+        <MudContainer Height="100%" class="centerLoginPanel">
             @Body
-        </article>
-    </main>
-</div>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.

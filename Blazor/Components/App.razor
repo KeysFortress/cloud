@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="height: 100%">
 
 <head>
     <meta charset="utf-8"/>
@@ -14,14 +14,14 @@
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet"/>
     <HeadOutlet/>
     <MudThemeProvider/>
-    <MudDialogProvider/>
-    <MudSnackbarProvider/>
+    <MudDialogProvider @rendermode="InteractiveServer" />
+    <MudSnackbarProvider @rendermode="InteractiveServer" />
 
 
 </head>
 
-<body>
-<Routes/>
+<body style="height: 100%">
+<Routes @rendermode="InteractiveServer"/>
 <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 <script src="_framework/blazor.web.js"></script>
 
