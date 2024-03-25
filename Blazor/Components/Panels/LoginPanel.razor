@@ -1,7 +1,4 @@
-@using Infrastructure;
-
-@inject IJSRuntime JSRuntime
-@inject IAuthenticationService AuthenticationService;
+@namespace Blazor.Components.Panels
 
 
 <MudCard style="width: 100%">
@@ -20,7 +17,9 @@
             Recover account
         </MudButton>
         <div style="width: 16px" />
-        <MudButton Variant="Variant.Filled" Color="Color.Primary">Login with passkey</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@OnLoginPressed">
+            Login with passkey
+        </MudButton>
     </MudCardActions>
 </MudCard>
 
@@ -41,18 +40,3 @@
     }
 
 </script>
-
-
-@code {
-    [Parameter] public string Email { get; set; }
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            var code = await AuthenticationService.InitLogin();
-            Console.WriteLine(code);
-            await JSRuntime.InvokeVoidAsync("onRenderComplete", null);
-        }
-    }
-
-}
