@@ -8,7 +8,7 @@ namespace Application;
 
 public class AuthenticationService : IAuthenticationService
 {
-    private readonly List<StoredChallenge> _storedChallenges = new();
+    private List<StoredChallenge> _storedChallenges = new();
     private readonly Timer _timer;
 
 
@@ -30,9 +30,10 @@ public class AuthenticationService : IAuthenticationService
         var uniqueMessage = GenerateRandomCode();
         var storedMessage = new StoredChallenge
         {
-            Id = id.ToString(),
+            Id = id,
             Challenge = uniqueMessage,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(10)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+            Verified = false,
         };
         _storedChallenges.Add(storedMessage);
 
@@ -41,11 +42,12 @@ public class AuthenticationService : IAuthenticationService
             Challenge = uniqueMessage,
             RpId = "http://localhost:5263/",
             Timeout = 60000,
+            Id = id,
             UserVerification = "preffered"
         };
     }
 
-    public StoredChallenge? VerifyChallenge(byte[] signature, string challenge, byte[] publicKeyBytes)
+    public StoredChallenge? VerifyChallenge(byte[] signature, Guid challenge, byte[] publicKeyBytes)
     {
         var signatureBytes = signature;
         var algorithm = new Ed25519();
@@ -55,9 +57,32 @@ public class AuthenticationService : IAuthenticationService
 
         var messageBytes = Encoding.UTF8.GetBytes(last.Challenge);
         var isSignatureValid = algorithm.Verify(publicKey, messageBytes, signatureBytes);
-
+        _storedChallenges.FirstOrDefault(x => x.Id == challenge)!.Verified = true;
 
         return isSignatureValid ? last : null;
+    }
+
+    public bool IsChallengeVerified(Guid id)
+    {
+        while (_storedChallenges.Any(x => x.Id == id))
+        {
+            var challengeData = _storedChallenges.FirstOrDefault(x => x.Id == id);
+            if (challengeData != null && challengeData.Verified)
+            {
+                _storedChallenges.Remove(challengeData);
+                return true;
+            }
+            Task.Delay(1000);
+        }
+
+        return false;
+    }
+
+
+
+    public bool Login(Guid userId)
+    {
+        return true;
     }
 
     public Task<bool> LogOut()
@@ -79,8 +104,5 @@ public class AuthenticationService : IAuthenticationService
         return code.ToString();
     }
 
-    public bool Login(Guid userId)
-    {
-        return true;
-    }
+
 }

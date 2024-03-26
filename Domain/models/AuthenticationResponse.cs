@@ -6,4 +6,5 @@ public class AuthenticationResponse
     public required int Timeout { get; set; }
     public required string RpId { get; set; }
     public required string UserVerification { get; set; }
+    public Guid Id { get; set; }
 }
