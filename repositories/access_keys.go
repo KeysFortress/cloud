@@ -1,0 +1,70 @@
+package repositories
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+
+	"leanmeal/api/interfaces"
+)
+
+type AccessKeysRepository struct {
+	ConnectionString string
+	Storage          interfaces.Storage
+}
+
+func (accessKeys *AccessKeysRepository) OpenConnection(storage *interfaces.Storage) bool {
+
+	accessKeys.Storage = *storage
+	accessKeys.Storage.Open()
+	return true
+
+}
+
+func (accessKeys *AccessKeysRepository) Add(id *uuid.UUID, key *string) interface{} {
+	query := `
+					INSERT INTO public.account_access_keys(
+					account_id, key, created_at)
+					VALUES ($1, $2, $3)
+					RETURNING id
+			`
+
+	var createdId uuid.UUID
+	queryResult := accessKeys.Storage.Add(&query, &[]interface{}{&id, &key, time.Now().UTC()})
+
+	err := queryResult.Scan(&createdId)
+	if err != nil {
+		fmt.Printf("Failed to add access key for account %v", id)
+		fmt.Println(err)
+	}
+
+	return createdId
+}
+
+func (accesKeys *AccessKeysRepository) GetAccountKeys(id uuid.UUID) []string {
+	query := `
+				SELECT key as "keyVal" FROM public.account_access_keys
+				WHERE account_id = $1
+			`
+
+	rows := accesKeys.Storage.Where(query, []interface{}{id})
+
+	var keys []string
+	for rows.Next() {
+		var keyVal string
+		err := rows.Scan(&keyVal)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		keys = append(keys, keyVal)
+	}
+
+	return keys
+}
+
+func (accessKeys *AccessKeysRepository) Close() bool {
+	accessKeys.Storage.Close()
+	return true
+}
