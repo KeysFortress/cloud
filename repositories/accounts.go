@@ -16,14 +16,6 @@ type Accounts struct {
 	Storage          interfaces.Storage
 }
 
-func (accountService *Accounts) OpenConnection(storage *interfaces.Storage) bool {
-
-	accountService.Storage = *storage
-	accountService.Storage.Open()
-	return true
-
-}
-
 func (accountService *Accounts) UserExists(email string) models.Account {
 	var account models.Account
 	data := accountService.Storage.Single("select id, email from public.accounts where email = $1", []interface{}{email})
@@ -39,11 +31,11 @@ func (accountService *Accounts) UserExists(email string) models.Account {
 	return account
 }
 
-func (accoutnService *Accounts) CreateAccount(newAccount *dtos.CreateAccountRequest) uuid.UUID {
+func (accoutnService *Accounts) CreateAccount(newAccount *dtos.CreateAccountRequest) (uuid.UUID, error) {
 	exists := accoutnService.UserExists(newAccount.Email)
 
 	if exists != (models.Account{}) {
-		return uuid.UUID{}
+		return uuid.UUID{}, nil
 	}
 
 	sql := `
@@ -66,7 +58,7 @@ func (accoutnService *Accounts) CreateAccount(newAccount *dtos.CreateAccountRequ
 		fmt.Println(err)
 	}
 
-	return createdId
+	return createdId, nil
 }
 
 func (accountService *Accounts) Get() []models.Account {
@@ -83,9 +75,4 @@ func (accountService *Accounts) Get() []models.Account {
 	}
 
 	return accounts
-}
-
-func (accountService *Accounts) Close() bool {
-	accountService.Storage.Close()
-	return true
 }

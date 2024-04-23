@@ -36,20 +36,21 @@ func startServer(Configuration interfaces.Configuration) {
 		ConnectionString: connectionString,
 	}
 
+	authMiddlewhere := middlewhere.AuthenticationMiddlewhere{
+		JwtService: &jwt,
+	}
+
+	_ = authMiddlewhere
+
 	authController := &routes.AuthenticationController{
 		JwtService: &jwt,
 		Storage:    &storage,
 	}
-	ingridientConroller := &routes.IngridientsControlller{
-		Storage: &storage,
-	}
 
 	router := gin.New()
-	router.Use(middlewhere.Authorize())
 	v1 := router.Group("/v1")
 
 	authController.Init(v1)
-	ingridientConroller.Init(v1)
 
 	srv := &http.Server{
 		Addr:    port,

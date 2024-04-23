@@ -54,5 +54,10 @@ func (s *Storage) Add(sql *string, params *[]interface{}) *sql.Row {
 }
 
 func (s *Storage) Close() bool {
+	err := s.Db.Close()
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
 	return true
 }
