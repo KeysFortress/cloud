@@ -17,7 +17,7 @@ import (
 type AuthenticationController struct {
 	AuthenticationService interfaces.AuthenticationService
 	Storage               interfaces.Storage
-	accountRepistory      repositories.Accounts
+	accountRepository     repositories.Accounts
 	accessKeysRepository  repositories.AccessKeysRepository
 	JwtService            interfaces.JwtService
 }
@@ -31,15 +31,14 @@ func (ac *AuthenticationController) beginRequest(ctx *gin.Context) {
 		return
 	}
 
-	ac.accountRepistory.OpenConnection(&ac.Storage)
-	userExists := ac.accountRepistory.UserExists(email)
+	ac.accessKeysRepository.Storage.Open()
+	userExists := ac.accountRepository.UserExists(email)
+	ac.accessKeysRepository.Storage.Close()
 
 	if userExists == (models.Account{}) {
 		ctx.JSON(500, "Bad request")
 		return
 	}
-
-	ac.accountRepistory.Close()
 
 	fmt.Println(email)
 	data := ac.AuthenticationService.GetMessage(&userExists.Email, &userExists.Id)
@@ -54,9 +53,9 @@ func (ac *AuthenticationController) finishRequest(ctx *gin.Context) {
 	}
 
 	accountId := ac.AuthenticationService.GetRequestById(request.Uuid)
-	ac.accessKeysRepository.OpenConnection(&ac.Storage)
+	ac.accessKeysRepository.Storage.Open()
 	keys := ac.accessKeysRepository.GetAccountKeys(accountId)
-	ac.accessKeysRepository.Close()
+	ac.accessKeysRepository.Storage.Close()
 	isVerified, err := ac.AuthenticationService.VerifySignature(*request, &keys)
 
 	if err != nil {
@@ -75,11 +74,18 @@ func (ac *AuthenticationController) createAccount(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
 		return
 	}
-	ac.accessKeysRepository.OpenConnection(&ac.Storage)
-	ac.accountRepistory.Storage = ac.accessKeysRepository.Storage
-	created := ac.accountRepistory.CreateAccount(request)
+
+	ac.accessKeysRepository.Storage.Open()
+	ac.accountRepository.Storage = ac.accessKeysRepository.Storage
+	created, err := ac.accountRepository.CreateAccount(request)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
+		return
+	}
+
 	ac.accessKeysRepository.Add(&created, &request.PublicKey)
-	ac.accessKeysRepository.Close()
+	ac.accessKeysRepository.Storage.Close()
 
 	parse := created.String()
 	token := ac.JwtService.IssueToken("user", parse)
@@ -90,6 +96,9 @@ func (ac *AuthenticationController) createAccount(ctx *gin.Context) {
 
 func (ac *AuthenticationController) Init(r *gin.RouterGroup) {
 	ac.AuthenticationService = &implementations.AuthenticationService{}
+	ac.accessKeysRepository.Storage = ac.Storage
+	ac.accountRepository.Storage = ac.Storage
+
 	println("initializing Authentication Controller")
 	go ac.AuthenticationService.Start()
 

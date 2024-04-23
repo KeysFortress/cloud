@@ -14,14 +14,6 @@ type AccessKeysRepository struct {
 	Storage          interfaces.Storage
 }
 
-func (accessKeys *AccessKeysRepository) OpenConnection(storage *interfaces.Storage) bool {
-
-	accessKeys.Storage = *storage
-	accessKeys.Storage.Open()
-	return true
-
-}
-
 func (accessKeys *AccessKeysRepository) Add(id *uuid.UUID, key *string) interface{} {
 	query := `
 					INSERT INTO public.account_access_keys(
@@ -62,9 +54,4 @@ func (accesKeys *AccessKeysRepository) GetAccountKeys(id uuid.UUID) []string {
 	}
 
 	return keys
-}
-
-func (accessKeys *AccessKeysRepository) Close() bool {
-	accessKeys.Storage.Close()
-	return true
 }
