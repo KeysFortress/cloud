@@ -28,11 +28,12 @@ func (authService *AuthenticationService) GetMessage(email *string, id *uuid.UUI
 	code := generateRandomString(32)
 
 	authResponse := dtos.StoredAuthRequest{
-		Id:   *id,
-		Name: *email,
-		Code: code,
-		Uuid: uuid.String(),
-		Time: time.Time{}.Add(time.Duration(time.Second * 30)),
+		Id:       *id,
+		Name:     *email,
+		Code:     code,
+		Uuid:     uuid.String(),
+		Time:     time.Time{}.Add(time.Duration(time.Second * 30)),
+		Approved: false,
 	}
 
 	authService.AuthRequests[uuid] = authResponse
@@ -73,11 +74,22 @@ func (authService *AuthenticationService) VerifySignature(response dtos.FinishAu
 
 		isValid := ed25519.Verify(pk, []byte(messege), decodedSignature)
 		if isValid {
+			authRequest.Approved = true
 			return authRequest.Id, nil
 		}
 	}
 
 	return uuid.Nil, nil
+}
+
+func (authService *AuthenticationService) ExchangeCodeForToken(code uuid.UUID) (uuid.UUID, bool) {
+	authRequest, ok := authService.AuthRequests[code]
+
+	if !ok {
+		return uuid.UUID{}, false
+	}
+
+	return authRequest.Id, true
 }
 
 func (authService *AuthenticationService) Start() {
