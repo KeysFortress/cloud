@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 
 	implementations "leanmeal/api/Implementations"
@@ -12,6 +13,7 @@ import (
 	"leanmeal/api/interfaces"
 	"leanmeal/api/models"
 	"leanmeal/api/repositories"
+	"leanmeal/api/utils"
 )
 
 type AuthenticationController struct {
@@ -94,6 +96,39 @@ func (ac *AuthenticationController) createAccount(ctx *gin.Context) {
 
 }
 
+func (ac *AuthenticationController) waitLogin(ctx *gin.Context) {
+	code := ctx.Param("code")
+
+	if code == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad request"})
+		return
+	}
+
+	id, err := utils.ParseUUID(code)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Invalid request, bad id"})
+		return
+	}
+
+	var getToken uuid.UUID
+	var valid bool
+	valid = true
+	for valid {
+		getToken, valid = ac.AuthenticationService.ExchangeCodeForToken(id)
+
+		if !valid {
+			ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Invalid request, token has expired"})
+			return
+		}
+
+		if getToken != uuid.Nil {
+			jwtToken := ac.JwtService.IssueToken("user", getToken.String())
+			ctx.JSON(http.StatusOK, jwtToken)
+			return
+		}
+	}
+}
+
 func (ac *AuthenticationController) Init(r *gin.RouterGroup) {
 	ac.AuthenticationService = &implementations.AuthenticationService{}
 	ac.accessKeysRepository.Storage = ac.Storage
@@ -104,6 +139,7 @@ func (ac *AuthenticationController) Init(r *gin.RouterGroup) {
 
 	r.GET("/begin-request/:email", ac.beginRequest)
 	r.POST("/finish-request", ac.finishRequest)
+	r.POST("/login/:code", ac.waitLogin)
 	r.POST("/create-account", ac.createAccount)
 
 }
