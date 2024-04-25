@@ -48,6 +48,7 @@ func startServer(Configuration interfaces.Configuration) {
 	}
 
 	passwordsController := &routes.PasswordsController{}
+	secretsController := &routes.SecretsController{}
 
 	router := gin.New()
 	router.Use(middlewhere.Cors())
@@ -55,6 +56,7 @@ func startServer(Configuration interfaces.Configuration) {
 
 	authController.Init(v1)
 	passwordsController.Init(v1, &authMiddlewhere)
+	secretsController.Init(v1, &authMiddlewhere)
 
 	srv := &http.Server{
 		Addr:    port,
