@@ -47,11 +47,14 @@ func startServer(Configuration interfaces.Configuration) {
 		Storage:    &storage,
 	}
 
+	passwordsController := &routes.PasswordsController{}
+
 	router := gin.New()
 	router.Use(middlewhere.Cors())
 	v1 := router.Group("/v1")
 
 	authController.Init(v1)
+	passwordsController.Init(v1, &authMiddlewhere)
 
 	srv := &http.Server{
 		Addr:    port,
