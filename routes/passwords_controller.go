@@ -74,5 +74,5 @@ func (pc *PasswordsController) Init(r *gin.RouterGroup, authMiddlewhere *middlew
 	controller.GET("category/:id", pc.category)
 	controller.POST("add", pc.add)
 	controller.POST("update", pc.update)
-	controller.POST("remove", pc.remove)
+	controller.DELETE("remove", pc.remove)
 }
