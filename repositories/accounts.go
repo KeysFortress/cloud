@@ -16,7 +16,7 @@ type Accounts struct {
 	Storage          interfaces.Storage
 }
 
-func (accountService *Accounts) UserExists(email string) models.Account {
+func (accountService *Accounts) UserExists(email string) (models.Account, error) {
 	var account models.Account
 	data := accountService.Storage.Single("select id, email from public.accounts where email = $1", []interface{}{email})
 
@@ -24,17 +24,17 @@ func (accountService *Accounts) UserExists(email string) models.Account {
 	if err != nil {
 		fmt.Printf("Failed to fetch account with email %v", email)
 		fmt.Println(err)
-		return account
+		return account, err
 	}
 
 	fmt.Println(&account)
-	return account
+	return account, nil
 }
 
 func (accoutnService *Accounts) CreateAccount(newAccount *dtos.CreateAccountRequest) (uuid.UUID, error) {
-	exists := accoutnService.UserExists(newAccount.Email)
+	_, err := accoutnService.UserExists(newAccount.Email)
 
-	if exists != (models.Account{}) {
+	if err != nil {
 		return uuid.UUID{}, nil
 	}
 
@@ -52,7 +52,8 @@ func (accoutnService *Accounts) CreateAccount(newAccount *dtos.CreateAccountRequ
 	})
 	var createdId uuid.UUID
 
-	err := queryResult.Scan(&createdId)
+	err = queryResult.Scan(&createdId)
+
 	if err != nil {
 		fmt.Printf("Failed to add access key for account %v", newAccount.Email)
 		fmt.Println(err)

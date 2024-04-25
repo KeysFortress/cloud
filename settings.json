@@ -1,5 +1,5 @@
 {
-    "ConnectionString": "postgres://postgres:1234@localhost:5432/keyfortress?sslmode=disable",
+    "ConnectionString": "postgres://postgres:1234@localhost:5432/keysfortress?sslmode=disable",
     "jwt-key": "ebMRsLYm34aTZ5IjfyhM70Yp0ZUjE3h6XZq+5js/bf4=",
     "jwt-issuer": "Collaborativesoft",
     "Port": ":8080"

@@ -89,6 +89,10 @@ func (authService *AuthenticationService) ExchangeCodeForToken(code uuid.UUID) (
 		return uuid.UUID{}, false
 	}
 
+	if !authRequest.Approved {
+		return uuid.UUID{}, true
+	}
+
 	return authRequest.Id, true
 }
 

@@ -48,6 +48,7 @@ func startServer(Configuration interfaces.Configuration) {
 	}
 
 	router := gin.New()
+	router.Use(middlewhere.Cors())
 	v1 := router.Group("/v1")
 
 	authController.Init(v1)

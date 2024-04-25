@@ -16,7 +16,7 @@ type AccessKeysRepository struct {
 
 func (accessKeys *AccessKeysRepository) Add(id *uuid.UUID, key *string) interface{} {
 	query := `
-					INSERT INTO public.account_access_keys(
+					INSERT INTO public.associated_account_access_keys(
 					account_id, key, created_at)
 					VALUES ($1, $2, $3)
 					RETURNING id
@@ -36,7 +36,7 @@ func (accessKeys *AccessKeysRepository) Add(id *uuid.UUID, key *string) interfac
 
 func (accesKeys *AccessKeysRepository) GetAccountKeys(id uuid.UUID) []string {
 	query := `
-				SELECT key as "keyVal" FROM public.account_access_keys
+				SELECT key as "keyVal" FROM public.associated_account_access_keys
 				WHERE account_id = $1
 			`
 

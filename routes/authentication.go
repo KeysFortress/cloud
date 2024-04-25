@@ -11,7 +11,6 @@ import (
 	implementations "leanmeal/api/Implementations"
 	"leanmeal/api/dtos"
 	"leanmeal/api/interfaces"
-	"leanmeal/api/models"
 	"leanmeal/api/repositories"
 	"leanmeal/api/utils"
 )
@@ -34,10 +33,10 @@ func (ac *AuthenticationController) beginRequest(ctx *gin.Context) {
 	}
 
 	ac.accessKeysRepository.Storage.Open()
-	userExists := ac.accountRepository.UserExists(email)
+	userExists, err := ac.accountRepository.UserExists(email)
 	ac.accessKeysRepository.Storage.Close()
 
-	if userExists == (models.Account{}) {
+	if err != nil {
 		ctx.JSON(500, "Bad request")
 		return
 	}
@@ -138,8 +137,8 @@ func (ac *AuthenticationController) Init(r *gin.RouterGroup) {
 	go ac.AuthenticationService.Start()
 
 	r.GET("/begin-request/:email", ac.beginRequest)
+	r.GET("/login/:code", ac.waitLogin)
 	r.POST("/finish-request", ac.finishRequest)
-	r.POST("/login/:code", ac.waitLogin)
 	r.POST("/create-account", ac.createAccount)
 
 }
