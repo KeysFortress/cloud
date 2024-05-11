@@ -31,8 +31,8 @@ func (accountService *Accounts) UserExists(email string) (models.Account, error)
 	return account, nil
 }
 
-func (accoutnService *Accounts) CreateAccount(newAccount *dtos.CreateAccountRequest) (uuid.UUID, error) {
-	_, err := accoutnService.UserExists(newAccount.Email)
+func (accountService *Accounts) CreateAccount(newAccount *dtos.CreateAccountRequest) (uuid.UUID, error) {
+	_, err := accountService.UserExists(newAccount.Email)
 
 	if err != nil {
 		return uuid.UUID{}, nil
@@ -44,7 +44,7 @@ func (accoutnService *Accounts) CreateAccount(newAccount *dtos.CreateAccountRequ
 		VALUES ($1, $2, $3, $4)
 		RETURNING id
 	`
-	queryResult := accoutnService.Storage.Add(&sql, &[]interface{}{
+	queryResult := accountService.Storage.Add(&sql, &[]interface{}{
 		newAccount.Email,
 		newAccount.Name,
 		time.Now().UTC(),

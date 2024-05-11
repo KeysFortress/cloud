@@ -21,6 +21,7 @@ type AuthenticationController struct {
 	accountRepository     repositories.Accounts
 	accessKeysRepository  repositories.AccessKeysRepository
 	JwtService            interfaces.JwtService
+	Configuration         interfaces.Configuration
 }
 
 func (ac *AuthenticationController) beginRequest(ctx *gin.Context) {
@@ -54,18 +55,23 @@ func (ac *AuthenticationController) finishRequest(ctx *gin.Context) {
 	}
 
 	accountId := ac.AuthenticationService.GetRequestById(request.Uuid)
+	if accountId == uuid.Nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Request expired or canceled!"})
+		return
+	}
+
 	ac.accessKeysRepository.Storage.Open()
 	keys := ac.accessKeysRepository.GetAccountKeys(accountId)
 	ac.accessKeysRepository.Storage.Close()
 	isVerified, err := ac.AuthenticationService.VerifySignature(*request, &keys)
 
-	if err != nil {
+	if err != nil || isVerified == uuid.Nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Signature!"})
 		return
 	}
 
 	token := ac.JwtService.IssueToken("user", isVerified.String())
-	ctx.JSON(http.StatusOK, gin.H{"access_token": token})
+	ctx.JSON(http.StatusOK, token)
 }
 
 func (ac *AuthenticationController) createAccount(ctx *gin.Context) {
@@ -91,7 +97,7 @@ func (ac *AuthenticationController) createAccount(ctx *gin.Context) {
 	parse := created.String()
 	token := ac.JwtService.IssueToken("user", parse)
 
-	ctx.JSON(http.StatusOK, gin.H{"access_token": token})
+	ctx.JSON(http.StatusOK, token)
 
 }
 
@@ -112,6 +118,7 @@ func (ac *AuthenticationController) waitLogin(ctx *gin.Context) {
 	var getToken uuid.UUID
 	var valid bool
 	valid = true
+
 	for valid {
 		getToken, valid = ac.AuthenticationService.ExchangeCodeForToken(id)
 
@@ -129,7 +136,15 @@ func (ac *AuthenticationController) waitLogin(ctx *gin.Context) {
 }
 
 func (ac *AuthenticationController) Init(r *gin.RouterGroup) {
-	ac.AuthenticationService = &implementations.AuthenticationService{}
+	domain := ac.Configuration.GetKey("domain")
+
+	if domain == nil {
+		panic("Domain is not set in the configuration file")
+	}
+
+	ac.AuthenticationService = &implementations.AuthenticationService{
+		Domain: domain.(string),
+	}
 	ac.accessKeysRepository.Storage = ac.Storage
 	ac.accountRepository.Storage = ac.Storage
 

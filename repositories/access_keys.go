@@ -36,7 +36,7 @@ func (accessKeys *AccessKeysRepository) Add(id *uuid.UUID, key *string) interfac
 
 func (accesKeys *AccessKeysRepository) GetAccountKeys(id uuid.UUID) []string {
 	query := `
-				SELECT key as "keyVal" FROM public.associated_account_access_keys
+				SELECT access_key as "keyVal" FROM public.associated_account_access_keys
 				WHERE account_id = $1
 			`
 

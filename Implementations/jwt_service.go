@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -13,13 +14,14 @@ type JwtService struct {
 	Issuer string
 }
 
-func (JwtService *JwtService) IssueToken(role string, id string) string {
+func (JwtService *JwtService) IssueToken(role string, id string) map[string]any {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
+	expiresAt := time.Now().UTC().Add(time.Hour * 24 * 30).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  id,
 		"nbf": time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
-		"exp": time.Now().UTC().Add(time.Hour * 24 * 30).Unix(),
+		"exp": expiresAt,
 		"iss": JwtService.Issuer,
 	})
 
@@ -27,7 +29,7 @@ func (JwtService *JwtService) IssueToken(role string, id string) string {
 	tokenString, err := token.SignedString([]byte(JwtService.Secret))
 
 	fmt.Println(tokenString, err)
-	return tokenString
+	return gin.H{"access_token": token, "expires_at": expiresAt}
 }
 
 func (JwtService *JwtService) ValidateToken(tokenString string) bool {
