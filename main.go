@@ -43,8 +43,9 @@ func startServer(Configuration interfaces.Configuration) {
 	_ = authMiddlewhere
 
 	authController := &routes.AuthenticationController{
-		JwtService: &jwt,
-		Storage:    &storage,
+		JwtService:    &jwt,
+		Storage:       &storage,
+		Configuration: Configuration,
 	}
 
 	passwordsController := &routes.PasswordsController{}
