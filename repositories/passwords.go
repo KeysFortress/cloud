@@ -26,8 +26,14 @@ func (pr *PasswordRepository) All() ([]models.Password, error) {
 	var passwords []models.Password
 	for queryResult.Next() {
 		var password models.Password
-		err := queryResult.Scan(&password.Id, &password.Email, &password.Website, &password.Password,
-			&password.CreatedAt, &password.UpdatedAt)
+		err := queryResult.Scan(
+			&password.Id,
+			&password.Email,
+			&password.Website,
+			&password.Password,
+			&password.CreatedAt,
+			&password.UpdatedAt,
+		)
 
 		if err != nil {
 			return []models.Password{}, err
@@ -48,11 +54,11 @@ func (pr *PasswordRepository) Add(passwordRequest dtos.IncomingPasswordRequest, 
 	`
 
 	queryResult := pr.Storage.Add(&query, &[]interface{}{
-		passwordRequest.Email,
-		passwordRequest.Password,
+		&passwordRequest.Email,
+		&passwordRequest.Password,
 		&id,
-		time.UTC,
-		passwordRequest.Website,
+		&time.UTC,
+		&passwordRequest.Website,
 	})
 	var createdId uuid.UUID
 	err := queryResult.Scan(&createdId)
