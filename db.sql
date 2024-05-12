@@ -58,7 +58,25 @@ CREATE TABLE IF NOT EXISTS public.associated_account_access_keys
     account_id uuid NOT NULL,
     access_key character varying(250) COLLATE pg_catalog."default" NOT NULL,
     created_at timestamp without time zone NOT NULL,
+    name character varying COLLATE pg_catalog."default",
     CONSTRAINT associated_account_access_keys_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS public.event_types
+(
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    name character varying(10) COLLATE pg_catalog."default",
+    CONSTRAINT event_types_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS public.events
+(
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    type_id uuid NOT NULL,
+    description character varying COLLATE pg_catalog."default",
+    device_id uuid,
+    created_at timestamp without time zone,
+    CONSTRAINT events_pkey PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS public.key_types
@@ -129,6 +147,20 @@ ALTER TABLE IF EXISTS public.accounts
 ALTER TABLE IF EXISTS public.associated_account_access_keys
     ADD CONSTRAINT associated_account_access_keys_account_id FOREIGN KEY (account_id)
     REFERENCES public.accounts (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.events
+    ADD CONSTRAINT events_device_id FOREIGN KEY (device_id)
+    REFERENCES public.associated_account_access_keys (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.events
+    ADD CONSTRAINT events_event_type_id FOREIGN KEY (type_id)
+    REFERENCES public.event_types (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
 
