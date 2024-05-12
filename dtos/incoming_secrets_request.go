@@ -1,9 +1,8 @@
 package dtos
 
-import "github.com/google/uuid"
-
 type IncomingSecretsRequest struct {
-	Email    string
-	Password string
-	Category uuid.UUID
+	Email       string
+	Password    string
+	Website     string
+	Description string
 }
