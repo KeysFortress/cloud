@@ -9,10 +9,11 @@ CREATE TABLE IF NOT EXISTS public.account_identties
     name character varying(100) COLLATE pg_catalog."default" NOT NULL,
     "publicKey" character varying COLLATE pg_catalog."default",
     "privateKey" character varying COLLATE pg_catalog."default",
-    key_type_id integer,
     account_id uuid,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
+    key_size smallint NOT NULL,
+    type uuid,
     CONSTRAINT account_identties_pkey PRIMARY KEY (id)
 );
 
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS public.account_passwords
     account_id uuid NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone,
+    website character varying COLLATE pg_catalog."default",
     CONSTRAINT account_passwords_pkey PRIMARY KEY (id)
 );
 
@@ -36,6 +38,7 @@ CREATE TABLE IF NOT EXISTS public.account_secrets
     account_id uuid NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone,
+    "Website" character varying COLLATE pg_catalog."default",
     CONSTRAINT account_secrets_pkey PRIMARY KEY (id)
 );
 
@@ -81,7 +84,9 @@ CREATE TABLE IF NOT EXISTS public.events
 
 CREATE TABLE IF NOT EXISTS public.key_types
 (
-    id integer NOT NULL,
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    name character varying(30) COLLATE pg_catalog."default",
+    algorithm character varying(60) COLLATE pg_catalog."default",
     CONSTRAINT key_types_pkey PRIMARY KEY (id)
 );
 
@@ -115,7 +120,7 @@ ALTER TABLE IF EXISTS public.account_identties
 
 
 ALTER TABLE IF EXISTS public.account_identties
-    ADD CONSTRAINT account_identities_key_type_id FOREIGN KEY (key_type_id)
+    ADD CONSTRAINT "account_Identities_key_type_id" FOREIGN KEY (type)
     REFERENCES public.key_types (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION

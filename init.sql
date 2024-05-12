@@ -1,3 +1,4 @@
+-- Seed Event types
 INSERT INTO public.event_types(
 	name)
 	VALUES ('Password Created');
@@ -34,3 +35,13 @@ INSERT INTO public.event_types(
 INSERT INTO public.event_types(
 	name)
 	VALUES ('Totp Deleted');
+
+-- Seed key types
+INSERT INTO public.key_types(
+	name, algorithm)
+	VALUES ('ED25519', 'Edwards-curve Digital Signature Algorithm (EdDSA)');
+
+INSERT INTO public.key_types(
+	name, algorithm)
+	VALUES ('RSA', 'Rivest–Shamir–Adleman (RSA)');
+
