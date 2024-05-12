@@ -12,4 +12,5 @@ type AuthenticationService interface {
 	VerifySignature(response dtos.FinishAuthResponse, keys *[]string) (uuid.UUID, error)
 	ExchangeCodeForToken(code uuid.UUID) (uuid.UUID, bool)
 	GetRequestById(id uuid.UUID) uuid.UUID
+	ExchangeCodeForPublicKey(code uuid.UUID) (string, bool)
 }
