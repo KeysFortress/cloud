@@ -7,10 +7,11 @@ import (
 )
 
 type StoredAuthRequest struct {
-	Name     string
-	Code     string
-	Uuid     string
-	Id       uuid.UUID
-	Time     time.Time
-	Approved bool
+	Name        string
+	Code        string
+	Uuid        string
+	Id          uuid.UUID
+	Time        time.Time
+	Approved    bool
+	ApprovedKey string
 }

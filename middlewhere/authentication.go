@@ -42,13 +42,16 @@ func (aw *AuthenticationMiddlewhere) Authorize() gin.HandlerFunc {
 
 		userId, err := utils.ParseUUID(id.(string))
 		if err != nil {
-			fmt.Print("Not a valid UUID")
+			fmt.Print("User id is not a valid UUID")
 			c.AbortWithStatusJSON(http.StatusBadRequest, UnsignedResponse{
 				Message: "Invalid access token",
 			})
 			return
 		}
 		c.Set("ID", userId)
+		deviceKey := aw.JwtService.ExtractValue(jwtToken, "deviceKey")
+		c.Set("DeviceKey", deviceKey)
+
 		c.Copy().Next()
 	}
 }

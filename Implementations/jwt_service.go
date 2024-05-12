@@ -14,15 +14,16 @@ type JwtService struct {
 	Issuer string
 }
 
-func (JwtService *JwtService) IssueToken(role string, id string) map[string]any {
+func (JwtService *JwtService) IssueToken(role string, id string, deviceKey string) map[string]any {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	expiresAt := time.Now().UTC().Add(time.Hour * 24 * 30).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":  id,
-		"nbf": time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
-		"exp": expiresAt,
-		"iss": JwtService.Issuer,
+		"id":        id,
+		"nbf":       time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+		"exp":       expiresAt,
+		"iss":       JwtService.Issuer,
+		"deviceKey": deviceKey,
 	})
 
 	// Sign and get the complete encoded token as a string using the secret

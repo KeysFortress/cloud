@@ -73,7 +73,7 @@ func (authService *AuthenticationService) VerifySignature(response dtos.FinishAu
 			return uuid.UUID{}, err
 		}
 
-		key := []byte(pk)
+		publicKey := []byte(pk)
 
 		decodedSignature, err := base64.StdEncoding.DecodeString(response.Signature)
 
@@ -92,10 +92,11 @@ func (authService *AuthenticationService) VerifySignature(response dtos.FinishAu
 
 		}
 
-		isValid := ed25519.Verify(key, dedcodedMessege, decodedSignature)
+		isValid := ed25519.Verify(publicKey, dedcodedMessege, decodedSignature)
 		if isValid {
 			mutated := authRequest
 			mutated.Approved = true
+			mutated.ApprovedKey = key
 			authService.AuthRequests.CompareAndSwap(response.Uuid, authRequest, mutated)
 
 			return authRequest.Id, nil
@@ -119,6 +120,23 @@ func (authService *AuthenticationService) ExchangeCodeForToken(code uuid.UUID) (
 	}
 
 	return authRequest.Id, true
+}
+
+func (authService *AuthenticationService) ExchangeCodeForPublicKey(code uuid.UUID) (string, bool) {
+	request, ok := authService.AuthRequests.Load(code)
+
+	if !ok {
+		return "", false
+	}
+
+	authRequest := request.(dtos.StoredAuthRequest)
+
+	if !authRequest.Approved {
+		return "", true
+	}
+
+	return authRequest.ApprovedKey, true
+
 }
 
 func (authService *AuthenticationService) Start() {

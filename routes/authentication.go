@@ -70,35 +70,10 @@ func (ac *AuthenticationController) finishRequest(ctx *gin.Context) {
 		return
 	}
 
-	token := ac.JwtService.IssueToken("user", isVerified.String())
+	approvedKey, _ := ac.AuthenticationService.ExchangeCodeForPublicKey(request.Uuid)
+
+	token := ac.JwtService.IssueToken("user", isVerified.String(), approvedKey)
 	ctx.JSON(http.StatusOK, token)
-}
-
-func (ac *AuthenticationController) createAccount(ctx *gin.Context) {
-	request := &dtos.CreateAccountRequest{}
-
-	if err := ctx.BindJSON(request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
-		return
-	}
-
-	ac.accessKeysRepository.Storage.Open()
-	ac.accountRepository.Storage = ac.accessKeysRepository.Storage
-	created, err := ac.accountRepository.CreateAccount(request)
-
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
-		return
-	}
-
-	ac.accessKeysRepository.Add(&created, &request.PublicKey)
-	ac.accessKeysRepository.Storage.Close()
-
-	parse := created.String()
-	token := ac.JwtService.IssueToken("user", parse)
-
-	ctx.JSON(http.StatusOK, token)
-
 }
 
 func (ac *AuthenticationController) waitLogin(ctx *gin.Context) {
@@ -128,7 +103,9 @@ func (ac *AuthenticationController) waitLogin(ctx *gin.Context) {
 		}
 
 		if getToken != uuid.Nil {
-			jwtToken := ac.JwtService.IssueToken("user", getToken.String())
+			approvedKey, _ := ac.AuthenticationService.ExchangeCodeForPublicKey(id)
+
+			jwtToken := ac.JwtService.IssueToken("user", getToken.String(), approvedKey)
 			ctx.JSON(http.StatusOK, jwtToken)
 			return
 		}
@@ -154,6 +131,4 @@ func (ac *AuthenticationController) Init(r *gin.RouterGroup) {
 	r.GET("/begin-request/:email", ac.beginRequest)
 	r.GET("/login/:code", ac.waitLogin)
 	r.POST("/finish-request", ac.finishRequest)
-	r.POST("/create-account", ac.createAccount)
-
 }
