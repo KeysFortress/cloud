@@ -40,7 +40,7 @@ func (pr *PasswordRepository) All() ([]models.Password, error) {
 }
 
 func (pr *PasswordRepository) Add(passwordRequest dtos.IncomingPasswordRequest, id uuid.UUID) (uuid.UUID, error) {
-	query:= `
+	query := `
 		INSERT INTO public.account_passwords(
 		name, content, account_id, created_at,  website)
 		VALUES ($1, $2, $3, $4, $5)
@@ -55,11 +55,55 @@ func (pr *PasswordRepository) Add(passwordRequest dtos.IncomingPasswordRequest, 
 		passwordRequest.Website,
 	})
 	var createdId uuid.UUID
-	err :=  queryResult.Scan(&createdId)
+	err := queryResult.Scan(&createdId)
 
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
 	return createdId, nil
+}
+
+func (pr *PasswordRepository) Update(passwordRequest models.Password) (bool, error) {
+	query := `
+		UPDATE public.account_passwords
+		SET name=$1, content=$2,  updated_at=$3, website=$4
+		WHERE id=$5;
+	`
+
+	result := pr.Storage.Single(query, []interface{}{
+		&passwordRequest.Email,
+		&passwordRequest.Password,
+		&time.UTC,
+		&passwordRequest.Website,
+		&passwordRequest.Id,
+	})
+
+	err := result.Scan()
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (pr *PasswordRepository) Content(id uuid.UUID) (string, error) {
+	query := `
+		SELECT content
+		FROM public.account_passwords
+		WHERE id = $1
+	`
+
+	result := pr.Storage.Single(query, []interface{}{
+		&id,
+	})
+
+	var passwordContent string
+	err := result.Scan(&passwordContent)
+
+	if err != nil {
+		return "", err
+	}
+
+	return passwordContent, nil
 }
