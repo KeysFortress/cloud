@@ -34,7 +34,7 @@ func (ec *EventsController) add(ctx *gin.Context) {
 }
 
 func (ec *EventsController) Init(r *gin.RouterGroup, authMiddlewhere *middlewhere.AuthenticationMiddlewhere) {
-	controller := r.Group("passwords")
+	controller := r.Group("events")
 	controller.Use(authMiddlewhere.Authorize())
 
 	controller.GET("all", ec.all)
