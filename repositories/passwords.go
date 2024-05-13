@@ -70,7 +70,7 @@ func (pr *PasswordRepository) Add(passwordRequest dtos.IncomingPasswordRequest, 
 	return createdId, nil
 }
 
-func (pr *PasswordRepository) Update(passwordRequest models.Password) (bool, error) {
+func (pr *PasswordRepository) Update(passwordRequest *dtos.IncomingPasswordUpdateRequest) (bool, error) {
 	query := `
 		UPDATE public.account_passwords
 		SET name=$1, content=$2,  updated_at=$3, website=$4
