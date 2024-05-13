@@ -6,5 +6,5 @@ type IncomingPasswordUpdateRequest struct {
 	Id       uuid.UUID
 	Email    string
 	Password string
-	Category uuid.UUID
+	Website  string
 }

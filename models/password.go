@@ -7,10 +7,15 @@ import (
 )
 
 type Password struct {
-	Id        uuid.UUID
-	Email     string
-	Password  int
-	Website   string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Id                uuid.UUID
+	Email             string
+	Password          int
+	Website           string
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	UpperCase         bool
+	LowerCase         bool
+	Digits            bool
+	Unique            bool
+	SpecialCharacters bool
 }
