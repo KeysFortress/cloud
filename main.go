@@ -35,6 +35,7 @@ func startServer(Configuration interfaces.Configuration) {
 	storage := implementations.Storage{
 		ConnectionString: connectionString,
 	}
+	passwordService := implementations.PasswordService{}
 
 	authMiddlewhere := middlewhere.AuthenticationMiddlewhere{
 		JwtService: &jwt,
@@ -48,7 +49,9 @@ func startServer(Configuration interfaces.Configuration) {
 		Configuration: Configuration,
 	}
 
-	passwordsController := &routes.PasswordsController{}
+	passwordsController := &routes.PasswordsController{
+		PasswordService: &passwordService,
+	}
 	secretsController := &routes.SecretsController{}
 	eventsController := &routes.EventsController{}
 
