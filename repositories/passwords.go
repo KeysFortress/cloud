@@ -45,6 +45,33 @@ func (pr *PasswordRepository) All() ([]models.Password, error) {
 	return passwords, nil
 }
 
+func (pr *PasswordRepository) Get(id uuid.UUID) (models.Password, error) {
+	query := `
+		SELECT id,name, website, LENGTH(content) as password_lenght, created_at, updated_at
+		FROM public.account_passwords
+		WHERE id=$1
+	`
+
+	queryResult := pr.Storage.Single(query, []interface{}{
+		&id,
+	})
+	var password models.Password
+	err := queryResult.Scan(
+		&password.Id,
+		&password.Email,
+		&password.Website,
+		&password.Password,
+		&password.CreatedAt,
+		&password.UpdatedAt,
+	)
+
+	if err != nil {
+		return models.Password{}, err
+	}
+
+	return password, nil
+}
+
 func (pr *PasswordRepository) Add(passwordRequest dtos.IncomingPasswordRequest, id uuid.UUID) (uuid.UUID, error) {
 	query := `
 		INSERT INTO public.account_passwords(

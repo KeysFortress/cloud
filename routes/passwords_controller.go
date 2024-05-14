@@ -3,6 +3,7 @@ package routes
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -17,6 +18,7 @@ import (
 type PasswordsController struct {
 	PasswordRepository repositories.PasswordRepository
 	PasswordService    interfaces.PasswordService
+	EventRepository    repositories.EventRepository
 }
 
 func (pc *PasswordsController) all(ctx *gin.Context) {
@@ -91,12 +93,24 @@ func (pc *PasswordsController) add(ctx *gin.Context) {
 
 	pc.PasswordRepository.Storage.Open()
 	created, err := pc.PasswordRepository.Add(*request, id.(uuid.UUID))
-	pc.PasswordRepository.Storage.Close()
-
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
 	}
 
+	event, err := pc.EventRepository.Add(dtos.CreateEvent{
+		TypeId:      1,
+		Description: "New password created, for account: " + request.Email + " with address: " + request.Website,
+		CreatedAt:   time.Now().UTC(),
+	})
+	if err != nil {
+		fmt.Println("Failed to create event abording")
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
+		return
+	}
+
+	pc.PasswordRepository.Storage.Close()
+
+	fmt.Println(event)
 	ctx.JSON(http.StatusOK, created)
 }
 
@@ -112,6 +126,25 @@ func (pc *PasswordsController) update(ctx *gin.Context) {
 	}
 
 	pc.PasswordRepository.Storage.Open()
+	oldPassword, err := pc.PasswordRepository.Get(request.Id)
+	if err != nil {
+		fmt.Println("Record doesn't exist")
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
+		return
+	}
+
+	event, err := pc.EventRepository.Add(dtos.CreateEvent{
+		TypeId:      2,
+		Description: "Password updated, from account: " + oldPassword.Email + " with address: " + oldPassword.Website + "to account: " + request.Email + " with address: " + request.Website,
+		CreatedAt:   time.Now().UTC(),
+	})
+	if err != nil {
+		fmt.Println("Failed to create an event aborting")
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
+		return
+	}
+
+	fmt.Println(event)
 	updated := pc.PasswordRepository.Update(request)
 	pc.PasswordRepository.Storage.Close()
 
