@@ -8,24 +8,14 @@ import (
 
 	"leanmeal/api/dtos"
 	"leanmeal/api/middlewhere"
+	"leanmeal/api/repositories"
 )
 
 type SecretsController struct {
+	SecretReoistory repositories.SecretsRepository
 }
 
 func (sc *SecretsController) all(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, "OK")
-}
-
-func (sc *SecretsController) category(ctx *gin.Context) {
-
-	id := ctx.Param("id")
-
-	if id == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
-		return
-	}
-
 	ctx.JSON(http.StatusOK, "OK")
 }
 
@@ -74,7 +64,6 @@ func (sc *SecretsController) Init(r *gin.RouterGroup, am *middlewhere.Authentica
 	controller.Use(am.Authorize())
 
 	controller.GET("all", sc.all)
-	controller.GET("category/:id", sc.category)
 	controller.POST("add", sc.add)
 	controller.POST("update", sc.update)
 	controller.DELETE("remove", sc.remove)

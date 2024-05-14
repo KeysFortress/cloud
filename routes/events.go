@@ -7,9 +7,11 @@ import (
 
 	"leanmeal/api/dtos"
 	"leanmeal/api/middlewhere"
+	"leanmeal/api/repositories"
 )
 
 type EventsController struct {
+	EventsRepository repositories.EventRepository
 }
 
 func (ec *EventsController) all(ctx *gin.Context) {

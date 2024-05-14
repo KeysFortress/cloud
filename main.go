@@ -19,50 +19,47 @@ import (
 )
 
 func main() {
-
+	// DI Service registration
 	config := implementations.Configuration{}
 	config.Load()
+	connectionString := config.GetKey("ConnectionString").(string)
 
-	startServer(&config)
-}
-
-func startServer(Configuration interfaces.Configuration) {
-	port := Configuration.GetKey("Port").(string)
 	jwt := implementations.JwtService{}
-	jwt.Secret = Configuration.GetKey("jwt-key").(string)
-	jwt.Issuer = Configuration.GetKey("jwt-issuer").(string)
-	connectionString := Configuration.GetKey("ConnectionString").(string)
+	jwt.Secret = config.GetKey("jwt-key").(string)
+	jwt.Issuer = config.GetKey("jwt-issuer").(string)
+
 	storage := implementations.Storage{
 		ConnectionString: connectionString,
 	}
 	passwordService := implementations.PasswordService{}
 
+	// Middlewhere setups
 	authMiddlewhere := middlewhere.AuthenticationMiddlewhere{
 		JwtService: &jwt,
 	}
+	cors := middlewhere.Cors()
 
-	_ = authMiddlewhere
+	//Init the server
+	startServer(&config, &storage, &passwordService, &jwt, authMiddlewhere, &cors)
+}
 
-	authController := &routes.AuthenticationController{
-		JwtService:    &jwt,
-		Storage:       &storage,
-		Configuration: Configuration,
-	}
-
-	passwordsController := &routes.PasswordsController{
-		PasswordService: &passwordService,
-	}
-	secretsController := &routes.SecretsController{}
-	eventsController := &routes.EventsController{}
+func startServer(configuration interfaces.Configuration, storage interfaces.Storage, passwordService interfaces.PasswordService,
+	jwt interfaces.JwtService, authMiddlewhere middlewhere.AuthenticationMiddlewhere, cors *gin.HandlerFunc) {
+	port := configuration.GetKey("Port").(string)
 
 	router := gin.New()
-	router.Use(middlewhere.Cors())
+	router.Use(*cors)
 	v1 := router.Group("/v1")
+	appRouter := routes.ApplicationRouter{
+		Configuration:   configuration,
+		Storage:         storage,
+		PasswordService: passwordService,
+		AuthMiddlewhere: &authMiddlewhere,
+		Jwt:             jwt,
+		V1:              v1,
+	}
 
-	authController.Init(v1)
-	passwordsController.Init(v1, &authMiddlewhere)
-	secretsController.Init(v1, &authMiddlewhere)
-	eventsController.Init(v1, &authMiddlewhere)
+	appRouter.Init()
 
 	srv := &http.Server{
 		Addr:    port,

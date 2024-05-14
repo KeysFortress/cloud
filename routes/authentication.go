@@ -17,9 +17,8 @@ import (
 
 type AuthenticationController struct {
 	AuthenticationService interfaces.AuthenticationService
-	Storage               interfaces.Storage
-	accountRepository     repositories.Accounts
-	accessKeysRepository  repositories.AccessKeysRepository
+	AccountRepository     repositories.Accounts
+	AccessKeysRepository  repositories.AccessKeysRepository
 	JwtService            interfaces.JwtService
 	Configuration         interfaces.Configuration
 }
@@ -29,16 +28,16 @@ func (ac *AuthenticationController) beginRequest(ctx *gin.Context) {
 	email := ctx.Param("email")
 
 	if email == "" {
-		ctx.JSON(500, "Bad request")
+		ctx.JSON(http.StatusBadRequest, "Bad request")
 		return
 	}
 
-	ac.accessKeysRepository.Storage.Open()
-	userExists, err := ac.accountRepository.UserExists(email)
-	ac.accessKeysRepository.Storage.Close()
+	ac.AccessKeysRepository.Storage.Open()
+	userExists, err := ac.AccountRepository.UserExists(email)
+	ac.AccessKeysRepository.Storage.Close()
 
 	if err != nil {
-		ctx.JSON(500, "Bad request")
+		ctx.JSON(http.StatusBadRequest, "Bad request")
 		return
 	}
 
@@ -60,9 +59,9 @@ func (ac *AuthenticationController) finishRequest(ctx *gin.Context) {
 		return
 	}
 
-	ac.accessKeysRepository.Storage.Open()
-	keys := ac.accessKeysRepository.GetAccountKeys(accountId)
-	ac.accessKeysRepository.Storage.Close()
+	ac.AccessKeysRepository.Storage.Open()
+	keys := ac.AccessKeysRepository.GetAccountKeys(accountId)
+	ac.AccessKeysRepository.Storage.Close()
 	isVerified, err := ac.AuthenticationService.VerifySignature(*request, &keys)
 
 	if err != nil || isVerified == uuid.Nil {
@@ -122,8 +121,6 @@ func (ac *AuthenticationController) Init(r *gin.RouterGroup) {
 	ac.AuthenticationService = &implementations.AuthenticationService{
 		Domain: domain.(string),
 	}
-	ac.accessKeysRepository.Storage = ac.Storage
-	ac.accountRepository.Storage = ac.Storage
 
 	println("initializing Authentication Controller")
 	go ac.AuthenticationService.Start()
