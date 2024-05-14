@@ -1,40 +1,40 @@
 -- Seed Event types
 INSERT INTO public.event_types(
-	name)
-	VALUES ('Password Created');
+	id,name)
+	VALUES (1,'Password Created');
 INSERT INTO public.event_types(
-	name)
-	VALUES ('Password Updated');
+	id,name)
+	VALUES (2,'Password Updated');
 INSERT INTO public.event_types(
-	name)
-	VALUES ('Password Deleted');
+	id,name)
+	VALUES (3,'Password Deleted');
 INSERT INTO public.event_types(
-	name)
-	VALUES ('Secret Created');
+	id, name)
+	VALUES (4,'Secret Created');
 INSERT INTO public.event_types(
-	name)
-	VALUES ('Secret Updated');
+	id,name)
+	VALUES (5,'Secret Updated');
 INSERT INTO public.event_types(
-	name)
-	VALUES ('Secret Deleted');
+	id,name)
+	VALUES (6, 'Secret Deleted');
 INSERT INTO public.event_types(
-	name)
-	VALUES ('Identity Created');
+	id,name)
+	VALUES (7,'Identity Created');
 INSERT INTO public.event_types(
-	name)
-	VALUES ('Identity Updated');
+	id,name)
+	VALUES (8,'Identity Updated');
 INSERT INTO public.event_types(
-	name)
-	VALUES ('Identity Deleted');
+	id,name)
+	VALUES (9,'Identity Deleted');
 INSERT INTO public.event_types(
-	name)
-	VALUES ('Totp Created');
+	id,name)
+	VALUES (10,'Totp Created');
 INSERT INTO public.event_types(
-	name)
-	VALUES ('Totp Updated');
+	id,name)
+	VALUES (11,'Totp Updated');
 INSERT INTO public.event_types(
-	name)
-	VALUES ('Totp Deleted');
+	id,name)
+	VALUES (12,'Totp Deleted');
 
 -- Seed key types
 INSERT INTO public.key_types(

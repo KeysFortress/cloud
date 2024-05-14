@@ -34,6 +34,9 @@ func (r *ApplicationRouter) Init() {
 		PasswordRepository: repositories.PasswordRepository{
 			Storage: r.Storage,
 		},
+		EventRepository: repositories.EventRepository{
+			Storage: r.Storage,
+		},
 	}
 	secretsController := &SecretsController{
 		SecretReoistory: repositories.SecretsRepository{
