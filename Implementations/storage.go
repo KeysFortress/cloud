@@ -22,6 +22,17 @@ func (s *Storage) Open() bool {
 	return true
 }
 
+func (s *Storage) Exec(sql string, params []interface{}) bool {
+	_, err := s.Db.Exec(sql, params...)
+
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	return true
+}
+
 func (s *Storage) Single(sql string, params []interface{}) *sql.Row {
 	row := s.Db.QueryRow(sql, params...)
 
