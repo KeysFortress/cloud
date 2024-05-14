@@ -30,8 +30,8 @@ func (aw *AuthenticationMiddlewhere) Authorize() gin.HandlerFunc {
 			return
 		}
 
-		result := aw.JwtService.ValidateToken(jwtToken)
-		if !result {
+		result, err := aw.JwtService.ValidateToken(jwtToken)
+		if !result || err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, UnsignedResponse{
 				Message: "Invalid access token",
 			})
