@@ -2,7 +2,6 @@ package implementations
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -30,10 +29,10 @@ func (JwtService *JwtService) IssueToken(role string, id string, deviceKey strin
 	tokenString, err := token.SignedString([]byte(JwtService.Secret))
 
 	fmt.Println(tokenString, err)
-	return gin.H{"access_token": token, "expires_at": expiresAt}
+	return gin.H{"access_token": tokenString, "expires_at": expiresAt}
 }
 
-func (JwtService *JwtService) ValidateToken(tokenString string) bool {
+func (JwtService *JwtService) ValidateToken(tokenString string) (bool, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -44,15 +43,15 @@ func (JwtService *JwtService) ValidateToken(tokenString string) bool {
 		return []byte(JwtService.Secret), nil
 	})
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		fmt.Println(claims["id"], claims["nbf"])
-		return true
+		return true, nil
 	} else {
 		fmt.Println(err)
-		return false
+		return false, err
 	}
 }
 

@@ -31,10 +31,6 @@ func (ps *PasswordService) GeneratePassword(length int, lowerCase, upperCase, un
 		validChars += specialCharacters
 	}
 
-	if unique && length < len(validChars) {
-		return "", fmt.Errorf("password length is too short for unique characters")
-	}
-
 	rand.NewSource(time.Now().UnixNano())
 
 	password := make([]byte, length)

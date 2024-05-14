@@ -40,6 +40,7 @@ func (pc *PasswordsController) generate(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, generated)
