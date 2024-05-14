@@ -57,7 +57,7 @@ func (pr *PasswordRepository) Add(passwordRequest dtos.IncomingPasswordRequest, 
 		&passwordRequest.Email,
 		&passwordRequest.Password,
 		&id,
-		&time.UTC,
+		time.Now().UTC(),
 		&passwordRequest.Website,
 	})
 	var createdId uuid.UUID
@@ -70,27 +70,22 @@ func (pr *PasswordRepository) Add(passwordRequest dtos.IncomingPasswordRequest, 
 	return createdId, nil
 }
 
-func (pr *PasswordRepository) Update(passwordRequest *dtos.IncomingPasswordUpdateRequest) (bool, error) {
+func (pr *PasswordRepository) Update(passwordRequest *dtos.IncomingPasswordUpdateRequest) bool {
 	query := `
 		UPDATE public.account_passwords
 		SET name=$1, content=$2,  updated_at=$3, website=$4
-		WHERE id=$5;
+		WHERE id=$5
 	`
 
-	result := pr.Storage.Single(query, []interface{}{
+	result := pr.Storage.Exec(query, []interface{}{
 		&passwordRequest.Email,
 		&passwordRequest.Password,
-		&time.UTC,
+		time.Now().UTC(),
 		&passwordRequest.Website,
 		&passwordRequest.Id,
 	})
 
-	err := result.Scan()
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return result
 }
 
 func (pr *PasswordRepository) Content(id uuid.UUID) (string, error) {

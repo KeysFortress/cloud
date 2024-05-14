@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,7 +13,7 @@ type Password struct {
 	Password          int
 	Website           string
 	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	UpdatedAt         sql.NullTime
 	UpperCase         bool
 	LowerCase         bool
 	Digits            bool

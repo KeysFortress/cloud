@@ -11,6 +11,7 @@ import (
 	"leanmeal/api/interfaces"
 	"leanmeal/api/middlewhere"
 	"leanmeal/api/repositories"
+	"leanmeal/api/utils"
 )
 
 type PasswordsController struct {
@@ -19,11 +20,43 @@ type PasswordsController struct {
 }
 
 func (pc *PasswordsController) all(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, gin.H{"message": "ok"})
+	pc.PasswordRepository.Storage.Open()
+	passwords, err := pc.PasswordRepository.All()
+	pc.PasswordRepository.Storage.Close()
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Messsage": "Bad Request"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, passwords)
 }
 
-func (pc *PasswordsController) category(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, gin.H{"message": "ok"})
+func (pc *PasswordsController) content(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	if id == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request, missing id"})
+		return
+	}
+
+	passwordId, err := utils.ParseUUID(id)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request, id is not UUID"})
+		return
+	}
+
+	pc.PasswordRepository.Storage.Open()
+	password, err := pc.PasswordRepository.Content(passwordId)
+	pc.PasswordRepository.Storage.Close()
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, password)
 }
 
 func (pc *PasswordsController) generate(ctx *gin.Context) {
@@ -47,7 +80,7 @@ func (pc *PasswordsController) generate(ctx *gin.Context) {
 }
 
 func (pc *PasswordsController) add(ctx *gin.Context) {
-	id := ctx.MustGet("id")
+	id := ctx.MustGet("ID")
 
 	request := &dtos.IncomingPasswordRequest{}
 	if err := ctx.BindJSON(request); err != nil {
@@ -68,7 +101,7 @@ func (pc *PasswordsController) add(ctx *gin.Context) {
 }
 
 func (pc *PasswordsController) update(ctx *gin.Context) {
-	id := ctx.MustGet("id")
+	id := ctx.MustGet("ID")
 	_ = id
 
 	request := &dtos.IncomingPasswordUpdateRequest{}
@@ -79,12 +112,8 @@ func (pc *PasswordsController) update(ctx *gin.Context) {
 	}
 
 	pc.PasswordRepository.Storage.Open()
-	updated, err := pc.PasswordRepository.Update(request)
+	updated := pc.PasswordRepository.Update(request)
 	pc.PasswordRepository.Storage.Close()
-
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
-	}
 
 	ctx.JSON(http.StatusOK, updated)
 }
@@ -109,7 +138,7 @@ func (pc *PasswordsController) Init(r *gin.RouterGroup, authMiddlewhere *middlew
 	controller.Use(authMiddlewhere.Authorize())
 
 	controller.GET("all", pc.all)
-	controller.GET("category/:id", pc.category)
+	controller.GET("content/:id", pc.content)
 	controller.POST("generate", pc.generate)
 	controller.POST("add", pc.add)
 	controller.POST("update", pc.update)
