@@ -122,7 +122,6 @@ func (ac *AuthenticationController) Init(r *gin.RouterGroup) {
 		Domain: domain.(string),
 	}
 
-	println("initializing Authentication Controller")
 	go ac.AuthenticationService.Start()
 
 	r.GET("/begin-request/:email", ac.beginRequest)

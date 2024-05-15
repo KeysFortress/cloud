@@ -46,6 +46,33 @@ func (pr *SecretsRepository) All() ([]models.Secret, error) {
 	return secrets, nil
 }
 
+func (pr *SecretsRepository) Get(id uuid.UUID) (models.Secret, error) {
+	query := `
+		SELECT id,name, website, LENGTH(content) as password_lenght, created_at, updated_at
+		FROM public.account_secrets
+		WHERE id=$1
+	`
+
+	queryResult := pr.Storage.Single(query, []interface{}{
+		&id,
+	})
+	var password models.Secret
+	err := queryResult.Scan(
+		&password.Id,
+		&password.Email,
+		&password.Website,
+		&password.Password,
+		&password.CreatedAt,
+		&password.UpdatedAt,
+	)
+
+	if err != nil {
+		return models.Secret{}, err
+	}
+
+	return password, nil
+}
+
 func (sr *SecretsRepository) Add(incomingSecret dtos.IncomingSecretsRequest, id uuid.UUID) (uuid.UUID, error) {
 	query := `
 		INSERT INTO public.account_secrets(
@@ -57,9 +84,9 @@ func (sr *SecretsRepository) Add(incomingSecret dtos.IncomingSecretsRequest, id 
 	queryResult := sr.Storage.Add(&query, &[]interface{}{
 		&incomingSecret.Email,
 		&incomingSecret.Description,
-		&incomingSecret.Password,
+		&incomingSecret.Secret,
 		&id,
-		&time.UTC,
+		time.Now().UTC(),
 		&incomingSecret.Website,
 	})
 	var createdId uuid.UUID
@@ -73,28 +100,24 @@ func (sr *SecretsRepository) Add(incomingSecret dtos.IncomingSecretsRequest, id 
 
 }
 
-func (sr *SecretsRepository) Update(secretRequest models.Secret) (bool, error) {
+func (sr *SecretsRepository) Update(secretRequest *dtos.IncomingSecretsUpdateRequest) bool {
 	query := `
 		UPDATE public.account_secrets
-		SET name=$1, content=$2,  updated_at=$3, website=$4, description = $6
-		WHERE id=$7;
+		SET name=$1, content=$2,  updated_at=$3, website=$4, description = $5
+		WHERE id=$6;
 	`
 
-	result := sr.Storage.Single(query, []interface{}{
+	result := sr.Storage.Exec(query, []interface{}{
 		&secretRequest.Email,
-		&secretRequest.Password,
-		&time.UTC,
+		&secretRequest.Secret,
+		time.Now().UTC(),
 		&secretRequest.Website,
-		&secretRequest.Description,
+		"--",
 		&secretRequest.Id,
 	})
 
-	err := result.Scan()
-	if err != nil {
-		return false, err
-	}
+	return result
 
-	return true, nil
 }
 
 func (sr *SecretsRepository) Content(id uuid.UUID) (string, error) {
@@ -116,4 +139,18 @@ func (sr *SecretsRepository) Content(id uuid.UUID) (string, error) {
 	}
 
 	return passwordContent, nil
+}
+
+func (sr *SecretsRepository) Delete(id uuid.UUID) bool {
+
+	query := `
+		DELETE FROM public.account_secrets
+		WHERE id = $1
+	`
+	result := sr.Storage.Exec(query, []interface{}{
+		&id,
+	})
+
+	return result
+
 }

@@ -42,6 +42,9 @@ func (r *ApplicationRouter) Init() {
 		SecretReoistory: repositories.SecretsRepository{
 			Storage: r.Storage,
 		},
+		EventRepository: repositories.EventRepository{
+			Storage: r.Storage,
+		},
 	}
 	identitiesController := &IdentitiesController{
 		IdentityRepository: repositories.IdentityRepository{
