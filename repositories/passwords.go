@@ -135,3 +135,16 @@ func (pr *PasswordRepository) Content(id uuid.UUID) (string, error) {
 
 	return passwordContent, nil
 }
+
+func (pr *PasswordRepository) Delete(id uuid.UUID) bool {
+
+	query := `
+		DELETE FROM public.account_passwords
+		WHERE id = $1
+	`
+	result := pr.Storage.Exec(query, []interface{}{
+		&id,
+	})
+
+	return result
+}
