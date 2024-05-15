@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,5 +14,5 @@ type Secret struct {
 	Description string
 	Password    int
 	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	UpdatedAt   sql.NullTime
 }

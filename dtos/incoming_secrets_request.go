@@ -2,7 +2,7 @@ package dtos
 
 type IncomingSecretsRequest struct {
 	Email       string
-	Password    string
+	Secret      string
 	Website     string
 	Description string
 }
