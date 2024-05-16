@@ -20,12 +20,14 @@ func (tr *TotpRepository) All() ([]models.TimeBasedCode, error) {
 		FROM public.time_based_codes as t
 		JOIN public.time_based_code_types as tt
 		on tt.id = t.type_id
-		GROUP BY t.id
-	`
+ 	`
 
 	queryResult := tr.Storage.Where(query, []interface{}{})
-
+	if queryResult == nil {
+		return []models.TimeBasedCode{}, nil
+	}
 	var timeBasedCodes []models.TimeBasedCode
+
 	for queryResult.Next() {
 		var timeBasedCode models.TimeBasedCode
 		err := queryResult.Scan(
@@ -130,7 +132,7 @@ func (tr *TotpRepository) Add(timePassword dtos.CreateTimeBasedCode) (uuid.UUID,
 	INSERT INTO public.time_based_codes(
 		website, email, secret, type_id, expiration, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNIGN id
+		RETURNING id
 	`
 
 	queryResult := tr.Storage.Single(query, []interface{}{
