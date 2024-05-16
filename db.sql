@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS public.account_secrets
     account_id uuid NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone,
-    "Website" character varying COLLATE pg_catalog."default",
+    website character varying COLLATE pg_catalog."default",
     CONSTRAINT account_secrets_pkey PRIMARY KEY (id)
 );
 
@@ -67,18 +67,18 @@ CREATE TABLE IF NOT EXISTS public.associated_account_access_keys
 
 CREATE TABLE IF NOT EXISTS public.event_types
 (
-    id uuid NOT NULL DEFAULT gen_random_uuid(),
-    name character varying(10) COLLATE pg_catalog."default",
+    id bigint NOT NULL,
+    name character varying(60) COLLATE pg_catalog."default",
     CONSTRAINT event_types_pkey PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS public.events
 (
     id uuid NOT NULL DEFAULT gen_random_uuid(),
-    type_id uuid NOT NULL,
     description character varying COLLATE pg_catalog."default",
     device_id uuid,
-    created_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    event_type_id bigint NOT NULL,
     CONSTRAINT events_pkey PRIMARY KEY (id)
 );
 
@@ -110,6 +110,26 @@ CREATE TABLE IF NOT EXISTS public.subscriptions
     next_billing_date timestamp without time zone NOT NULL,
     enabled boolean NOT NULL,
     CONSTRAINT subscriptions_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS public.time_based_code_types
+(
+    id smallint NOT NULL,
+    name character varying(60) COLLATE pg_catalog."default",
+    CONSTRAINT time_based_code_types_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS public.time_based_codes
+(
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    website character varying(200) COLLATE pg_catalog."default" NOT NULL,
+    email character varying(200) COLLATE pg_catalog."default" NOT NULL,
+    secret character varying COLLATE pg_catalog."default" NOT NULL,
+    type_id smallint NOT NULL,
+    expiration smallint NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    CONSTRAINT time_based_codes_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE IF EXISTS public.account_identties
@@ -164,10 +184,11 @@ ALTER TABLE IF EXISTS public.events
 
 
 ALTER TABLE IF EXISTS public.events
-    ADD CONSTRAINT events_event_type_id FOREIGN KEY (type_id)
+    ADD CONSTRAINT events_event_type_id FOREIGN KEY (event_type_id)
     REFERENCES public.event_types (id) MATCH SIMPLE
     ON UPDATE NO ACTION
-    ON DELETE NO ACTION;
+    ON DELETE NO ACTION
+    NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.rac_devices
@@ -180,6 +201,13 @@ ALTER TABLE IF EXISTS public.rac_devices
 ALTER TABLE IF EXISTS public.rac_devices
     ADD CONSTRAINT rac_updated_by FOREIGN KEY (updated_by)
     REFERENCES public.accounts (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.time_based_codes
+    ADD CONSTRAINT time_based_code_type_id FOREIGN KEY (type_id)
+    REFERENCES public.time_based_code_types (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
 
