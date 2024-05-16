@@ -1,7 +1,9 @@
 package dtos
 
+import "github.com/google/uuid"
+
 type UpdateTimeBasedCode struct {
-	Id       string
+	Id       uuid.UUID
 	Website  string
 	Email    string
 	Secret   string

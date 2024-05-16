@@ -153,7 +153,7 @@ func (tr *TotpRepository) Add(timePassword dtos.CreateTimeBasedCode) (uuid.UUID,
 	return id, nil
 }
 
-func (tr *TotpRepository) Update(timePassword dtos.UpdateTimeBasedCode) bool {
+func (tr *TotpRepository) Update(timePassword *dtos.UpdateTimeBasedCode) bool {
 	query := `
 		UPDATE public.time_based_codes
 		SET  website=$1, email=$2, secret=$3, type_id=$4, expiration=$5, updated_at=$6
