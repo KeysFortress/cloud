@@ -56,10 +56,19 @@ func (r *ApplicationRouter) Init() {
 			Storage: r.Storage,
 		},
 	}
+	totpController := &TotpController{
+		EventsRepository: repositories.EventRepository{
+			Storage: r.Storage,
+		},
+		TotpRepository: repositories.TotpRepository{
+			Storage: r.Storage,
+		},
+	}
 
 	authController.Init(r.V1)
 	passwordsController.Init(r.V1, r.AuthMiddlewhere)
 	secretsController.Init(r.V1, r.AuthMiddlewhere)
 	identitiesController.Init(r.V1, r.AuthMiddlewhere)
 	eventsController.Init(r.V1, r.AuthMiddlewhere)
+	totpController.Init(r.V1, r.AuthMiddlewhere)
 }
