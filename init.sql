@@ -48,10 +48,24 @@ INSERT INTO public.key_types(
 -- Seed Time Based Code Types
 INSERT INTO public.time_based_code_types(
 	id, name)
-	VALUES (1, 'HTOP');
+	VALUES (1, 'HOTP');
 INSERT INTO public.time_based_code_types(
 	id, name)
 	VALUES (2, 'TOTP');
 INSERT INTO public.time_based_code_types(
 	id, name)
 	VALUES (3, 'OTP');
+
+-- Seed the algorithm table
+INSERT INTO public.time_based_algorithms(
+	id, name)
+	VALUES (1, 'AlgorithmSHA1');
+INSERT INTO public.time_based_algorithms(
+	id, name)
+	VALUES (2, 'AlgorithmSHA256');
+INSERT INTO public.time_based_algorithms(
+	id, name)
+	VALUES (3, 'AlgorithmSHA512');
+INSERT INTO public.time_based_algorithms(
+	id, name)
+	VALUES (4, 'AlgorithmMD5');

@@ -16,10 +16,12 @@ type TotpRepository struct {
 
 func (tr *TotpRepository) All() ([]models.TimeBasedCode, error) {
 	query := `
-		SELECT t.id, t.website, t.email, LENGTH(t.secret) as password_lenght, tt.name, t.expiration, t.created_at, t.updated_at
+		SELECT t.id, t.website, t.email, LENGTH(t.secret) as password_lenght, tt.name, t.expiration, t.created_at, t.updated_at, ta.name
 		FROM public.time_based_codes as t
 		JOIN public.time_based_code_types as tt
 		on tt.id = t.type_id
+		JOIN public.time_based_algorithms as ta
+		on ta.id = t.algorithm_id
  	`
 
 	queryResult := tr.Storage.Where(query, []interface{}{})
@@ -39,6 +41,7 @@ func (tr *TotpRepository) All() ([]models.TimeBasedCode, error) {
 			&timeBasedCode.Validity,
 			&timeBasedCode.CreatedAt,
 			&timeBasedCode.UpdatedAt,
+			&timeBasedCode.Algorithm,
 		)
 
 		if err != nil {
@@ -53,10 +56,12 @@ func (tr *TotpRepository) All() ([]models.TimeBasedCode, error) {
 
 func (tr *TotpRepository) Get(id uuid.UUID) (models.TimeBasedCode, error) {
 	query := `
-	SELECT t.id, t.website, t.email, LENGTH(t.secret) as password_lenght, tt.name, t.expiration, t.created_at, t.updated_at
+	SELECT t.id, t.website, t.email, LENGTH(t.secret) as password_lenght, tt.name, t.expiration, t.created_at, t.updated_at, ta.name
 	FROM public.time_based_codes as t
 	JOIN public.time_based_code_types as tt
 	on tt.id = t.type_id
+	JOIN public.time_based_algorithms as ta
+	on ta.id = t.algorithm_id
 	WHERE t.id=$1
 	`
 	queryResult := tr.Storage.Single(query, []interface{}{
@@ -72,6 +77,7 @@ func (tr *TotpRepository) Get(id uuid.UUID) (models.TimeBasedCode, error) {
 		&timeBasedCode.Validity,
 		&timeBasedCode.CreatedAt,
 		&timeBasedCode.UpdatedAt,
+		&timeBasedCode.Algorithm,
 	)
 
 	if err != nil {
@@ -130,8 +136,8 @@ func (sr *TotpRepository) Content(id uuid.UUID) (string, error) {
 func (tr *TotpRepository) Add(timePassword dtos.CreateTimeBasedCode) (uuid.UUID, error) {
 	query := `
 	INSERT INTO public.time_based_codes(
-		website, email, secret, type_id, expiration, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		website, email, secret, type_id, expiration, algorithm_id, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
 
@@ -141,6 +147,7 @@ func (tr *TotpRepository) Add(timePassword dtos.CreateTimeBasedCode) (uuid.UUID,
 		&timePassword.Secret,
 		&timePassword.Type,
 		&timePassword.Validity,
+		&timePassword.Algorithm,
 		time.Now().UTC(),
 	})
 
@@ -158,8 +165,8 @@ func (tr *TotpRepository) Add(timePassword dtos.CreateTimeBasedCode) (uuid.UUID,
 func (tr *TotpRepository) Update(timePassword *dtos.UpdateTimeBasedCode) bool {
 	query := `
 		UPDATE public.time_based_codes
-		SET  website=$1, email=$2, secret=$3, type_id=$4, expiration=$5, updated_at=$6
-		WHERE id= $7
+		SET  website=$1, email=$2, secret=$3, type_id=$4, expiration=$5, created_at=$6  updated_at=$7
+		WHERE id= $8
 	`
 
 	result := tr.Storage.Exec(query, []interface{}{
@@ -168,6 +175,7 @@ func (tr *TotpRepository) Update(timePassword *dtos.UpdateTimeBasedCode) bool {
 		&timePassword.Secret,
 		&timePassword.Type,
 		&timePassword.Validity,
+		&timePassword.Algorithm,
 		time.Now().UTC(),
 		&timePassword.Id,
 	})
