@@ -112,6 +112,13 @@ CREATE TABLE IF NOT EXISTS public.subscriptions
     CONSTRAINT subscriptions_pkey PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS public.time_based_algorithms
+(
+    id smallint NOT NULL,
+    name character varying(60) COLLATE pg_catalog."default",
+    CONSTRAINT time_based_algorithms_pkey PRIMARY KEY (id)
+);
+
 CREATE TABLE IF NOT EXISTS public.time_based_code_types
 (
     id smallint NOT NULL,
@@ -129,6 +136,7 @@ CREATE TABLE IF NOT EXISTS public.time_based_codes
     expiration smallint NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone,
+    algorithm_id smallint,
     CONSTRAINT time_based_codes_pkey PRIMARY KEY (id)
 );
 
@@ -203,6 +211,14 @@ ALTER TABLE IF EXISTS public.rac_devices
     REFERENCES public.accounts (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.time_based_codes
+    ADD CONSTRAINT time_based_code_algorithm_id FOREIGN KEY (algorithm_id)
+    REFERENCES public.time_based_algorithms (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.time_based_codes

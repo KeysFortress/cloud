@@ -13,6 +13,7 @@ type TimeBasedCode struct {
 	Secret    int
 	Type      string
 	Validity  int
+	Algorithm string
 	CreatedAt time.Time
 	UpdatedAt sql.NullTime
 }
