@@ -52,3 +52,16 @@ func (t *TimeBasedService) GenerateHOTP(secret string) ([]string, error) {
 	}
 	return codes, nil
 }
+
+func (t *TimeBasedService) VerifyTOTP(code string, secret string, period int, algorithm otp.Algorithm) (bool, error) {
+	isValid, err := totp.ValidateCustom(code, secret, time.Now(), totp.ValidateOpts{
+		Period:    uint(period),
+		Algorithm: algorithm,
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	return isValid, nil
+}
