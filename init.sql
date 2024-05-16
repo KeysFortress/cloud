@@ -45,3 +45,13 @@ INSERT INTO public.key_types(
 	name, algorithm)
 	VALUES ('RSA', 'Rivest–Shamir–Adleman (RSA)');
 
+-- Seed Time Based Code Types
+INSERT INTO public.time_based_code_types(
+	id, name)
+	VALUES (1, 'HTOP');
+INSERT INTO public.time_based_code_types(
+	id, name)
+	VALUES (2, 'TOTP');
+INSERT INTO public.time_based_code_types(
+	id, name)
+	VALUES (3, 'OTP');
