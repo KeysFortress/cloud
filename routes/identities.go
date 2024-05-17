@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	implementations "leanmeal/api/Implementations"
 	"leanmeal/api/dtos"
@@ -30,6 +31,8 @@ func (ic *IdentitiesController) types(ctx *gin.Context) {
 }
 
 func (ic *IdentitiesController) add(ctx *gin.Context) {
+	account := ctx.MustGet("ID")
+
 	request := &dtos.CreateIdentity{}
 	if err := ctx.BindJSON(request); err != nil {
 		fmt.Println("could not bind request body")
@@ -37,12 +40,15 @@ func (ic *IdentitiesController) add(ctx *gin.Context) {
 		return
 	}
 
+	if request.KeyType > 2 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad request parameter."})
+	}
+
 	switch request.KeyType {
 	case 1:
 		ic.KeyManager = &implementations.ED25519Key{}
 	case 2:
 		ic.KeyManager = &implementations.RSAKey{}
-		break
 	}
 
 	public, private, err := ic.KeyManager.Generate(request.KeySize)
@@ -54,7 +60,7 @@ func (ic *IdentitiesController) add(ctx *gin.Context) {
 	}
 
 	ic.IdentityRepository.Storage.Open()
-	created, err := ic.IdentityRepository.Add(*request, &public, &private)
+	created, err := ic.IdentityRepository.Add(*request, &public, &private, account.(uuid.UUID))
 	if err != nil {
 		ic.IdentityRepository.Storage.Close()
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})

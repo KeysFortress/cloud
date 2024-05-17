@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,7 +15,7 @@ type Identity struct {
 	PublicKey  string
 	PrivateKey int
 	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	UpdatedAt  sql.NullTime
 }
 
 type IdentityInternal struct {
@@ -25,5 +26,5 @@ type IdentityInternal struct {
 	PublicKey  string
 	PrivateKey string
 	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	UpdatedAt  sql.NullTime
 }
