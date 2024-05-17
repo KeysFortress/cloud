@@ -137,7 +137,6 @@ func (tc TotpController) code(ctx *gin.Context) {
 }
 
 func (tc *TotpController) add(ctx *gin.Context) {
-
 	request := &dtos.CreateTimeBasedCode{}
 	if err := ctx.BindJSON(request); err != nil {
 		fmt.Println("could not bind request body")
