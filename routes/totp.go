@@ -100,6 +100,7 @@ func (tc TotpController) code(ctx *gin.Context) {
 	result := "--- ---"
 	tc.TotpRepository.Storage.Open()
 	secret, err := tc.TotpRepository.GetInternal(uuid)
+	tc.TotpRepository.Storage.Close()
 
 	if err != nil {
 		fmt.Println("Record doesn't exist")
