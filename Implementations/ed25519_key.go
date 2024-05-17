@@ -11,7 +11,7 @@ import (
 type ED25519Key struct {
 }
 
-func (e *ED25519Key) GenerateKeys(issuer string, size int) ([]byte, []byte, error) {
+func (e *ED25519Key) Generate(size int) ([]byte, []byte, error) {
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		fmt.Printf("Failed to generate key pair : %s", err)

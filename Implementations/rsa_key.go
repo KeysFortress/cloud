@@ -13,7 +13,7 @@ import (
 type RSAKey struct {
 }
 
-func (r *RSAKey) GenerateKeys(issuer string, size int) ([]byte, []byte, error) {
+func (r *RSAKey) Generate(size int) ([]byte, []byte, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, size)
 	if err != nil {
 		fmt.Printf("Failed to generate RSA key pair: %s\n", err)

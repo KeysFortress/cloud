@@ -16,3 +16,14 @@ type Identity struct {
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 }
+
+type IdentityInternal struct {
+	Id         uuid.UUID
+	Name       string
+	KeyType    int
+	KeySize    int
+	PublicKey  string
+	PrivateKey string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}

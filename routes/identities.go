@@ -1,13 +1,16 @@
 package routes
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
+	implementations "leanmeal/api/Implementations"
 	"leanmeal/api/dtos"
+	"leanmeal/api/interfaces"
 	"leanmeal/api/middlewhere"
 	"leanmeal/api/repositories"
 )
@@ -15,6 +18,7 @@ import (
 type IdentitiesController struct {
 	IdentityRepository repositories.IdentityRepository
 	EventsRepository   repositories.EventRepository
+	KeyManager         interfaces.KeyManager
 }
 
 func (ic *IdentitiesController) all(ctx *gin.Context) {
@@ -33,8 +37,24 @@ func (ic *IdentitiesController) add(ctx *gin.Context) {
 		return
 	}
 
+	switch request.KeyType {
+	case 1:
+		ic.KeyManager = &implementations.ED25519Key{}
+	case 2:
+		ic.KeyManager = &implementations.RSAKey{}
+		break
+	}
+
+	public, private, err := ic.KeyManager.Generate(request.KeySize)
+
+	if err != nil {
+		fmt.Println(err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
 	ic.IdentityRepository.Storage.Open()
-	created, err := ic.IdentityRepository.Add(*request)
+	created, err := ic.IdentityRepository.Add(*request, &public, &private)
 	if err != nil {
 		ic.IdentityRepository.Storage.Close()
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
@@ -43,9 +63,10 @@ func (ic *IdentitiesController) add(ctx *gin.Context) {
 
 	event, err := ic.EventsRepository.Add(dtos.CreateEvent{
 		TypeId:      1,
-		Description: "New time based password created, for account: " + request.Email + " with address: " + request.Website,
+		Description: "New key pair generated, with name: " + request.Name,
 		CreatedAt:   time.Now().UTC(),
 	})
+
 	if err != nil {
 		fmt.Println("Failed to create event abording")
 		ic.EventsRepository.Storage.Close()
@@ -71,7 +92,11 @@ func (ic *IdentitiesController) update(ctx *gin.Context) {
 	}
 
 	ic.EventsRepository.Storage.Open()
-	oldPassword, err := ic.IdentityRepository.Get(request.Id)
+	var public []byte
+	var private []byte
+
+	oldIdentity, err := ic.IdentityRepository.GetInternal(request.Id)
+
 	if err != nil {
 		fmt.Println("Record doesn't exist")
 		ic.EventsRepository.Storage.Close()
@@ -79,7 +104,38 @@ func (ic *IdentitiesController) update(ctx *gin.Context) {
 		return
 	}
 
-	updated := ic.IdentityRepository.Update(request)
+	public, err = base64.StdEncoding.DecodeString(oldIdentity.PublicKey)
+	if err != nil {
+		ic.EventsRepository.Storage.Close()
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
+		return
+	}
+	private, err = base64.StdEncoding.DecodeString(oldIdentity.PrivateKey)
+	if err != nil {
+		ic.EventsRepository.Storage.Close()
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
+		return
+	}
+
+	switch request.KeyType {
+	case 1:
+		ic.KeyManager = &implementations.ED25519Key{}
+	case 2:
+		ic.KeyManager = &implementations.RSAKey{}
+	}
+
+	if request.RegenerateKey {
+		public, private, err = ic.KeyManager.Generate(request.KeySize)
+
+		if err != nil {
+			fmt.Println(err)
+			ic.EventsRepository.Storage.Close()
+			ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+			return
+		}
+	}
+
+	updated := ic.IdentityRepository.Update(request, &public, &private)
 
 	if !updated {
 		fmt.Println("Failed to update entity, aborting")
@@ -90,7 +146,7 @@ func (ic *IdentitiesController) update(ctx *gin.Context) {
 
 	event, err := ic.EventsRepository.Add(dtos.CreateEvent{
 		TypeId:      2,
-		Description: "TOTP updated, from account: " + oldPassword.Email + " with address: " + oldPassword.Website + "to account: " + request.Email + " with address: " + request.Website,
+		Description: "Key updated, name set to: " + oldIdentity.Name,
 		CreatedAt:   time.Now().UTC(),
 	})
 
