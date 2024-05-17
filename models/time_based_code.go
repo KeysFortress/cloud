@@ -17,3 +17,16 @@ type TimeBasedCode struct {
 	CreatedAt time.Time
 	UpdatedAt sql.NullTime
 }
+
+type TimeBasedCodeInternal struct {
+	Id        string
+	Email     string
+	Website   string
+	Code      string
+	Secret    string
+	Type      int
+	Validity  int
+	Algorithm string
+	CreatedAt time.Time
+	UpdatedAt sql.NullTime
+}
