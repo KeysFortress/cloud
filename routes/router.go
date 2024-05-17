@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 
+	implementations "leanmeal/api/Implementations"
 	"leanmeal/api/interfaces"
 	"leanmeal/api/middlewhere"
 	"leanmeal/api/repositories"
@@ -63,6 +64,7 @@ func (r *ApplicationRouter) Init() {
 		TotpRepository: repositories.TotpRepository{
 			Storage: r.Storage,
 		},
+		TotpService: &implementations.TimeBasedService{},
 	}
 
 	authController.Init(r.V1)
