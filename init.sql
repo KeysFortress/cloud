@@ -37,13 +37,13 @@ INSERT INTO public.event_types(
 	VALUES (12,'Totp Deleted');
 
 -- Seed key types
-INSERT INTO public.key_types(
-	name, algorithm)
-	VALUES ('ED25519', 'Edwards-curve Digital Signature Algorithm (EdDSA)');
+
+INSERT INTO public.key_types(id, name, description)
+	VALUES (1, 'ED25519', 'Edwards-curve Digital Signature Algorithm (EdDSA)');
 
 INSERT INTO public.key_types(
-	name, algorithm)
-	VALUES ('RSA', 'Rivest–Shamir–Adleman (RSA)');
+	id, name, description)
+	VALUES (2, 'RSA',  'Rivest–Shamir–Adleman (RSA)');
 
 -- Seed Time Based Code Types
 INSERT INTO public.time_based_code_types(
