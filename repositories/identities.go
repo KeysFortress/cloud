@@ -149,8 +149,8 @@ func (i *IdentityRepository) Add(identity dtos.CreateIdentity, public *[]byte, p
 		identity.Name,
 		base64.StdEncoding.EncodeToString(*public),
 		base64.StdEncoding.EncodeToString(*private),
-		identity.KeyType,
 		identity.KeySize,
+		identity.KeyType,
 		id,
 		time.Now().UTC(),
 	})

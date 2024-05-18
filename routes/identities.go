@@ -103,8 +103,14 @@ func (ic *IdentitiesController) add(ctx *gin.Context) {
 
 	ic.EventsRepository.Storage.Close()
 
+	response := dtos.CreateIdentityResponse{
+		Id:         created,
+		PublicKey:  string(public),
+		PrivateKey: len(private),
+	}
+
 	fmt.Println(event)
-	ctx.JSON(http.StatusOK, created)
+	ctx.JSON(http.StatusOK, response)
 }
 
 func (ic *IdentitiesController) update(ctx *gin.Context) {
@@ -185,10 +191,16 @@ func (ic *IdentitiesController) update(ctx *gin.Context) {
 
 		return
 	}
+	ic.IdentityRepository.Storage.Close()
+
+	response := dtos.UpdateIdentityReponse{
+		State:      updated,
+		PublicKey:  string(public),
+		PrivateKey: len(private),
+	}
 
 	fmt.Println(event)
-	ic.IdentityRepository.Storage.Close()
-	ctx.JSON(http.StatusOK, updated)
+	ctx.JSON(http.StatusOK, response)
 }
 
 func (ic *IdentitiesController) Init(r *gin.RouterGroup, a *middlewhere.AuthenticationMiddlewhere) {
