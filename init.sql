@@ -38,12 +38,12 @@ INSERT INTO public.event_types(
 
 -- Seed key types
 
-INSERT INTO public.key_types(id, name, description)
-	VALUES (1, 'ED25519', 'Edwards-curve Digital Signature Algorithm (EdDSA)');
+INSERT INTO public.key_types(id, name, description, has_size)
+	VALUES (1, 'ED25519', 'Edwards-curve Digital Signature Algorithm (EdDSA)', false);
 
 INSERT INTO public.key_types(
-	id, name, description)
-	VALUES (2, 'RSA',  'Rivest–Shamir–Adleman (RSA)');
+	id, name, description, has_size)
+	VALUES (2, 'RSA',  'Rivest–Shamir–Adleman (RSA)', true);
 
 -- Seed Time Based Code Types
 INSERT INTO public.time_based_code_types(

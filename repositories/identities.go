@@ -123,6 +123,7 @@ func (i *IdentityRepository) GetKeyTypes() ([]models.KeyType, error) {
 			&keyType.Id,
 			&keyType.Name,
 			&keyType.Description,
+			&keyType.HasSize,
 		)
 
 		if err != nil {

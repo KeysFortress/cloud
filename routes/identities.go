@@ -23,11 +23,32 @@ type IdentitiesController struct {
 }
 
 func (ic *IdentitiesController) all(ctx *gin.Context) {
-	return
+	ic.IdentityRepository.Storage.Open()
+	identities, err := ic.IdentityRepository.All()
+	ic.IdentityRepository.Storage.Close()
+
+	if err != nil {
+		fmt.Println(err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, identities)
 }
 
 func (ic *IdentitiesController) types(ctx *gin.Context) {
-	return
+	ic.IdentityRepository.Storage.Open()
+	keyTypes, err := ic.IdentityRepository.GetKeyTypes()
+	ic.IdentityRepository.Storage.Close()
+
+	if err != nil {
+		fmt.Println(err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, keyTypes)
+
 }
 
 func (ic *IdentitiesController) add(ctx *gin.Context) {
@@ -171,7 +192,7 @@ func (ic *IdentitiesController) update(ctx *gin.Context) {
 }
 
 func (ic *IdentitiesController) Init(r *gin.RouterGroup, a *middlewhere.AuthenticationMiddlewhere) {
-	controller := r.Group("totp")
+	controller := r.Group("identities")
 	controller.Use(a.Authorize())
 
 	controller.GET("all", ic.all)
