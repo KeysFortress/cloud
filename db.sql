@@ -3,12 +3,12 @@
 BEGIN;
 
 
-CREATE TABLE IF NOT EXISTS public.account_identties
+CREATE TABLE IF NOT EXISTS public.account_identities
 (
     id uuid NOT NULL DEFAULT gen_random_uuid(),
     name character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    "publicKey" character varying COLLATE pg_catalog."default",
-    "privateKey" character varying COLLATE pg_catalog."default",
+    identity_key character varying COLLATE pg_catalog."default",
+    identity_secret_key character varying COLLATE pg_catalog."default",
     account_id uuid,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS public.key_types
     id smallint NOT NULL,
     name character varying(30) COLLATE pg_catalog."default",
     description character varying(100) COLLATE pg_catalog."default",
+    has_size boolean DEFAULT true,
     CONSTRAINT key_types_pkey PRIMARY KEY (id)
 );
 
@@ -140,14 +141,14 @@ CREATE TABLE IF NOT EXISTS public.time_based_codes
     CONSTRAINT time_based_codes_pkey PRIMARY KEY (id)
 );
 
-ALTER TABLE IF EXISTS public.account_identties
+ALTER TABLE IF EXISTS public.account_identities
     ADD CONSTRAINT "account_Identities_account_id" FOREIGN KEY (account_id)
     REFERENCES public.accounts (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
 
 
-ALTER TABLE IF EXISTS public.account_identties
+ALTER TABLE IF EXISTS public.account_identities
     ADD CONSTRAINT "account_Identities_key_type_id" FOREIGN KEY (key_type_id)
     REFERENCES public.key_types (id) MATCH SIMPLE
     ON UPDATE NO ACTION

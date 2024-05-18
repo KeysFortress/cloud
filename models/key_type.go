@@ -4,4 +4,5 @@ type KeyType struct {
 	Id          int
 	Name        string
 	Description string
+	HasSize     bool
 }
