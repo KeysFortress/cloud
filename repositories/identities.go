@@ -18,7 +18,7 @@ type IdentityRepository struct {
 
 func (i *IdentityRepository) All() ([]models.Identity, error) {
 	query := `
-		SELECT ai.name,  kt.name, ai.key_size, ai.identity_key,LENGTH(ai.identity_secret_key), ai.created_at, ai.updated_at FROM public.account_identities as ai
+		SELECT ai.id,  ai.name,  kt.name, ai.key_size, ai.identity_key,LENGTH(ai.identity_secret_key), ai.created_at, ai.updated_at FROM public.account_identities as ai
 		JOIN public.key_types as  kt on kt.id = ai.key_type_id
 	`
 
@@ -30,6 +30,7 @@ func (i *IdentityRepository) All() ([]models.Identity, error) {
 
 		err := queryResult.Scan(
 			&identity.Id,
+			&identity.Name,
 			&identity.KeyType,
 			&identity.KeySize,
 			&identity.PublicKey,
@@ -51,7 +52,7 @@ func (i *IdentityRepository) All() ([]models.Identity, error) {
 
 func (i *IdentityRepository) Get(id uuid.UUID) (models.Identity, error) {
 	query := `
-		SELECT ai.name,  kt.name, ai.key_size, ai.identity_key,LENGTH(ai.identity_secret_key), ai.created_at, ai.updated_at FROM public.account_identities as ai
+		SELECT ai.id, ai.name,  kt.name, ai.key_size, ai.identity_key,LENGTH(ai.identity_secret_key), ai.created_at, ai.updated_at FROM public.account_identities as ai
 		JOIN public.key_types as  kt on kt.id = ai.key_type_id
 		WHERE ai.id = $1
 	`
@@ -63,6 +64,7 @@ func (i *IdentityRepository) Get(id uuid.UUID) (models.Identity, error) {
 	var identity models.Identity
 	err := queryResult.Scan(
 		&identity.Id,
+		&identity.Name,
 		&identity.KeyType,
 		&identity.KeySize,
 		&identity.PublicKey,
@@ -81,7 +83,7 @@ func (i *IdentityRepository) Get(id uuid.UUID) (models.Identity, error) {
 
 func (i *IdentityRepository) GetInternal(id uuid.UUID) (models.IdentityInternal, error) {
 	query := `
-		SELECT ai.name, ai.key_type_id, ai.key_size, ai.identity_key,ai.identity_secret_key, ai.created_at, ai.updated_at FROM public.account_identities as ai
+		SELECT ai.id, ai.name, ai.key_type_id, ai.key_size, ai.identity_key,ai.identity_secret_key, ai.created_at, ai.updated_at FROM public.account_identities as ai
 		WHERE ai.id = $1
 	`
 
@@ -92,6 +94,7 @@ func (i *IdentityRepository) GetInternal(id uuid.UUID) (models.IdentityInternal,
 	var identity models.IdentityInternal
 	err := queryResult.Scan(
 		&identity.Id,
+		&identity.Name,
 		&identity.KeyType,
 		&identity.KeySize,
 		&identity.PublicKey,
@@ -174,9 +177,10 @@ func (i *IdentityRepository) Update(identity *dtos.UpdateIdentity, public *[]byt
 			identity_key=$2,
 			identity_secret_key=$3,
 			key_size=$4,
-			key_type_id=$5
-			updated_at=$6,
+			key_type_id=$5,
+			updated_at=$6
 		WHERE id=$7;
+
 	`
 
 	updated := i.Storage.Exec(query, []interface{}{
