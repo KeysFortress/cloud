@@ -51,6 +51,9 @@ func (r *ApplicationRouter) Init() {
 		IdentityRepository: repositories.IdentityRepository{
 			Storage: r.Storage,
 		},
+		EventsRepository: repositories.EventRepository{
+			Storage: r.Storage,
+		},
 	}
 	eventsController := &EventsController{
 		EventsRepository: repositories.EventRepository{
