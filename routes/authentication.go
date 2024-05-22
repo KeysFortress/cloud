@@ -71,7 +71,7 @@ func (ac *AuthenticationController) finishRequest(ctx *gin.Context) {
 
 	approvedKey, _ := ac.AuthenticationService.ExchangeCodeForPublicKey(request.Uuid)
 
-	token := ac.JwtService.IssueToken("user", isVerified.String(), approvedKey)
+	token := ac.JwtService.IssueMfaToken(isVerified.String(), approvedKey)
 	ctx.JSON(http.StatusOK, token)
 }
 
@@ -104,11 +104,15 @@ func (ac *AuthenticationController) waitLogin(ctx *gin.Context) {
 		if getToken != uuid.Nil {
 			approvedKey, _ := ac.AuthenticationService.ExchangeCodeForPublicKey(id)
 
-			jwtToken := ac.JwtService.IssueToken("user", getToken.String(), approvedKey)
+			jwtToken := ac.JwtService.IssueMfaToken(getToken.String(), approvedKey)
 			ctx.JSON(http.StatusOK, jwtToken)
 			return
 		}
 	}
+}
+
+func (ac *AuthenticationController) pickMethod(ctx *gin.Context) {
+
 }
 
 func (ac *AuthenticationController) Init(r *gin.RouterGroup) {
@@ -126,5 +130,7 @@ func (ac *AuthenticationController) Init(r *gin.RouterGroup) {
 
 	r.GET("/begin-request/:email", ac.beginRequest)
 	r.GET("/login/:code", ac.waitLogin)
+	r.GET("/pick-method/:id", ac.pickMethod)
 	r.POST("/finish-request", ac.finishRequest)
+	r.POST("/perform-method/:id", ac.pickMethod)
 }
