@@ -30,6 +30,9 @@ func (r *ApplicationRouter) Init() {
 			Storage: r.Storage,
 		},
 	}
+
+	mfaController := &MfaController{}
+
 	passwordsController := &PasswordsController{
 		PasswordService: r.PasswordService,
 		PasswordRepository: repositories.PasswordRepository{
@@ -76,4 +79,5 @@ func (r *ApplicationRouter) Init() {
 	identitiesController.Init(r.V1, r.AuthMiddlewhere)
 	eventsController.Init(r.V1, r.AuthMiddlewhere)
 	totpController.Init(r.V1, r.AuthMiddlewhere)
+	mfaController.Init(r.V1, r.AuthMiddlewhere)
 }
