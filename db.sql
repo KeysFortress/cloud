@@ -103,6 +103,8 @@ CREATE TABLE IF NOT EXISTS public.mfa_methods
     id uuid NOT NULL DEFAULT gen_random_uuid(),
     type_id smallint NOT NULL,
     value character varying COLLATE pg_catalog."default" NOT NULL,
+    user_id uuid NOT NULL,
+    address character varying COLLATE pg_catalog."default",
     CONSTRAINT mfa_methods_pkey PRIMARY KEY (id, type_id, value)
 );
 
@@ -220,6 +222,14 @@ ALTER TABLE IF EXISTS public.mfa_methods
     REFERENCES public.mfa_method_types (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.mfa_methods
+    ADD CONSTRAINT mfa_methods_user_id_fkey FOREIGN KEY (user_id)
+    REFERENCES public.accounts (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.rac_devices
