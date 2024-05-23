@@ -33,11 +33,19 @@ func main() {
 	}
 	passwordService := implementations.PasswordService{}
 
+	initializationService := implementations.Initialization{
+		Storage: storage,
+	}
 	// Middlewhere setups
 	authMiddlewhere := middlewhere.AuthenticationMiddlewhere{
 		JwtService: &jwt,
 	}
 	cors := middlewhere.Cors()
+
+	if !initializationService.Initialized() {
+		initializationService.Database()
+		initializationService.Seed()
+	}
 
 	//Init the server
 	startServer(&config, &storage, &passwordService, &jwt, authMiddlewhere, &cors)
