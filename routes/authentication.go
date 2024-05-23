@@ -53,8 +53,8 @@ func (ac *AuthenticationController) finishRequest(ctx *gin.Context) {
 		return
 	}
 
-	accountId := ac.AuthenticationService.GetRequestById(request.Uuid)
-	if accountId == uuid.Nil {
+	accountId, err := ac.AuthenticationService.GetRequestById(request.Uuid)
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Request expired or canceled!"})
 		return
 	}
