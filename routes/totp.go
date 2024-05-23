@@ -111,7 +111,7 @@ func (tc TotpController) code(ctx *gin.Context) {
 
 	switch secret.Type {
 	case 1:
-		code, err := tc.TotpService.GenerateHOTP(secret.Secret)
+		code, err := tc.TotpService.GenerateHOTPCode(secret.Secret)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
 			return
@@ -123,7 +123,7 @@ func (tc TotpController) code(ctx *gin.Context) {
 		result = codes
 	default:
 		currentAlgorithm := utils.ParseAlgorithm(secret.Type)
-		code, err := tc.TotpService.GenerateTOTP(secret.Secret, secret.Validity, currentAlgorithm)
+		code, err := tc.TotpService.GenerateTOTPCode(secret.Secret, secret.Validity, currentAlgorithm)
 
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
