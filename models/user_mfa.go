@@ -7,7 +7,8 @@ import (
 )
 
 type UserMfa struct {
-	Id     uuid.UUID
-	TypeId int
-	Value  sql.NullString
+	Id      uuid.UUID
+	TypeId  int
+	Value   string
+	Address sql.NullString
 }
