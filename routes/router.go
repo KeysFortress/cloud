@@ -39,6 +39,13 @@ func (r *ApplicationRouter) Init() {
 		MfaRepository: repositories.MfaRepository{
 			Storage: r.Storage,
 		},
+		EmailService: &implementations.MailService{
+			From:     r.Configuration.GetKey("from").(string),
+			Password: r.Configuration.GetKey("smtp-password").(string),
+			SkipSSl:  r.Configuration.GetKey("ssl").(bool),
+			Smtp:     r.Configuration.GetKey("smtp").(string),
+			Port:     r.Configuration.GetKey("port").(int),
+		},
 	}
 
 	passwordsController := &PasswordsController{
