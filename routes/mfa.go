@@ -1,20 +1,25 @@
 package routes
 
 import (
+	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/pquerna/otp"
 
 	"leanmeal/api/interfaces"
 	"leanmeal/api/middlewhere"
 	"leanmeal/api/repositories"
+	"leanmeal/api/utils"
 )
 
 type MfaController struct {
 	TotpService        interfaces.TimeBasedService
 	AccountsRepository repositories.Accounts
 	MfaRepository      repositories.MfaRepository
+	EmailService       interfaces.MailService
 }
 
 func (m *MfaController) setup(ctx *gin.Context) {
@@ -54,7 +59,9 @@ func (m *MfaController) setup(ctx *gin.Context) {
 		return
 	}
 
-	_, err = m.MfaRepository.Add(secret, 2, id.(uuid.UUID))
+	_, err = m.MfaRepository.Add(secret, 2, id.(uuid.UUID), sql.NullString{
+		String: account.Email,
+	})
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Failed to save new secret, aborted operation!"})
@@ -65,7 +72,56 @@ func (m *MfaController) setup(ctx *gin.Context) {
 }
 
 func (m *MfaController) pickMethod(ctx *gin.Context) {
-	return
+	id := ctx.MustGet("ID")
+
+	if id == "" {
+		fmt.Println("Failed to extract user id aborting")
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+	typeIdData := ctx.Param("type")
+
+	typeId, err := utils.ParseInt(typeIdData)
+
+	if err != nil {
+		fmt.Println("Failed to parse type id aborting")
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
+	if typeId == 2 {
+		ctx.JSON(http.StatusOK, gin.H{"Message": "Please check your authenticator application"})
+		return
+	}
+
+	m.MfaRepository.Storage.Open()
+	emails, err := m.MfaRepository.GetForUserByType(id.(uuid.UUID), typeId)
+	m.MfaRepository.Storage.Close()
+
+	if err != nil {
+		result := "Failed to retrive emails methods for user " + id.(string)
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": result})
+		return
+
+	}
+
+	for _, maiData := range emails {
+		code, err := m.TotpService.GenerateTOTPCode(maiData.Value, 30, otp.AlgorithmMD5)
+		if err != nil {
+			result := "Bad Request failed to generate Code for email" + maiData.Address.String
+			ctx.JSON(http.StatusBadRequest, gin.H{"Message": result})
+			return
+		}
+
+		emailSent, err := m.EmailService.SendMessage(maiData.Address.String, "MFA Verification", "Your mfa verification code is "+code)
+		if err != nil || !emailSent {
+			result := "Bad Request failed to send for email" + maiData.Address.String
+			ctx.JSON(http.StatusBadRequest, gin.H{"Message": result})
+			return
+		}
+
+	}
+	ctx.JSON(http.StatusOK, gin.H{"Message": "Please check your email"})
 }
 
 func (m *MfaController) performMethod(ctx *gin.Context) {
@@ -89,7 +145,7 @@ func (m *MfaController) Init(r *gin.RouterGroup, a *middlewhere.AuthenticationMi
 	controller.Use(a.AuthorizeMFA())
 
 	controller.GET("setup", m.setup)
-	controller.GET("pick-method", m.pickMethod)
+	controller.GET("pick-method/:type", m.pickMethod)
 	controller.POST("perform-method", m.performMethod)
 
 	authorizedController := r.Group("user-mfa")
