@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"strconv"
+
 	"github.com/google/uuid"
 	"github.com/pquerna/otp"
 )
@@ -12,6 +14,15 @@ func ParseUUID(in string) (uuid.UUID, error) {
 	}
 
 	return id, nil
+}
+
+func ParseInt(in string) (int, error) {
+	i, err := strconv.Atoi(in)
+	if err != nil {
+		return 0, err
+	}
+
+	return i, nil
 }
 
 func ParseAlgorithm(current int) otp.Algorithm {
