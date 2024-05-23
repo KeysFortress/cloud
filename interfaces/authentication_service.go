@@ -11,6 +11,6 @@ type AuthenticationService interface {
 	GetMessage(email *string, id *uuid.UUID) dtos.InitAuthReponse
 	VerifySignature(response dtos.FinishAuthResponse, keys *[]string) (uuid.UUID, error)
 	ExchangeCodeForToken(code uuid.UUID) (uuid.UUID, bool)
-	GetRequestById(id uuid.UUID) uuid.UUID
+	GetRequestById(id uuid.UUID) (uuid.UUID, error)
 	ExchangeCodeForPublicKey(code uuid.UUID) (string, bool)
 }

@@ -30,6 +30,25 @@ func (r *ApplicationRouter) Init() {
 			Storage: r.Storage,
 		},
 	}
+
+	mfaController := &MfaController{
+		TotpService: &implementations.TimeBasedService{},
+		AccountsRepository: repositories.Accounts{
+			Storage: r.Storage,
+		},
+		MfaRepository: repositories.MfaRepository{
+			Storage: r.Storage,
+		},
+		EmailService: &implementations.MailService{
+			From:     r.Configuration.GetKey("from").(string),
+			Password: r.Configuration.GetKey("smtp-password").(string),
+			SkipSSl:  r.Configuration.GetKey("ssl").(bool),
+			Smtp:     r.Configuration.GetKey("smtp").(string),
+			Port:     r.Configuration.GetKey("port").(int),
+		},
+		JwtService: r.Jwt,
+	}
+
 	passwordsController := &PasswordsController{
 		PasswordService: r.PasswordService,
 		PasswordRepository: repositories.PasswordRepository{
@@ -76,4 +95,5 @@ func (r *ApplicationRouter) Init() {
 	identitiesController.Init(r.V1, r.AuthMiddlewhere)
 	eventsController.Init(r.V1, r.AuthMiddlewhere)
 	totpController.Init(r.V1, r.AuthMiddlewhere)
+	mfaController.Init(r.V1, r.AuthMiddlewhere)
 }

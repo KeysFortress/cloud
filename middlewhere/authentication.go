@@ -56,6 +56,42 @@ func (aw *AuthenticationMiddlewhere) Authorize() gin.HandlerFunc {
 	}
 }
 
+func (aw *AuthenticationMiddlewhere) AuthorizeMFA() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		jwtToken, err := extractBearerToken(c.GetHeader("Authorization"))
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, UnsignedResponse{
+				Message: err.Error(),
+			})
+			return
+		}
+
+		result, err := aw.JwtService.ValidateMfaToken(jwtToken)
+		if !result || err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, UnsignedResponse{
+				Message: "Invalid access token",
+			})
+			return
+		}
+
+		id := aw.JwtService.ExtractValue(jwtToken, "id")
+
+		userId, err := utils.ParseUUID(id.(string))
+		if err != nil {
+			fmt.Print("User id is not a valid UUID")
+			c.AbortWithStatusJSON(http.StatusBadRequest, UnsignedResponse{
+				Message: "Invalid access token",
+			})
+			return
+		}
+		c.Set("ID", userId)
+		deviceKey := aw.JwtService.ExtractValue(jwtToken, "deviceKey")
+		c.Set("DeviceKey", deviceKey)
+
+		c.Copy().Next()
+	}
+}
+
 func extractBearerToken(header string) (string, error) {
 	if header == "" {
 		return "", errors.New("bad header value given")

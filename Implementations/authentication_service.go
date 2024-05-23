@@ -48,10 +48,12 @@ func (authService *AuthenticationService) GetMessage(email *string, id *uuid.UUI
 	return response
 }
 
-func (authService *AuthenticationService) GetRequestById(id uuid.UUID) uuid.UUID {
-	request, _ := authService.AuthRequests.Load(id)
-
-	return request.(dtos.StoredAuthRequest).Id
+func (authService *AuthenticationService) GetRequestById(id uuid.UUID) (uuid.UUID, error) {
+	request, exists := authService.AuthRequests.Load(id)
+	if !exists {
+		return uuid.UUID{}, errors.New("record doesn't exist")
+	}
+	return request.(dtos.StoredAuthRequest).Id, nil
 }
 
 func (authService *AuthenticationService) VerifySignature(response dtos.FinishAuthResponse, keys *[]string) (uuid.UUID, error) {

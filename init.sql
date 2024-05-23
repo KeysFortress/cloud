@@ -69,3 +69,11 @@ INSERT INTO public.time_based_algorithms(
 INSERT INTO public.time_based_algorithms(
 	id, name)
 	VALUES (4, 'AlgorithmMD5');
+
+-- Seed the mfa method types
+INSERT INTO public.mfa_method_types(
+	id, name)
+	VALUES (1, 'email');
+INSERT INTO public.mfa_method_types(
+	id, name)
+	VALUES (2, 'authenticator');

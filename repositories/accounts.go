@@ -31,6 +31,21 @@ func (accountService *Accounts) UserExists(email string) (models.Account, error)
 	return account, nil
 }
 
+func (accountService *Accounts) GetById(id uuid.UUID) (models.Account, error) {
+	var account models.Account
+	data := accountService.Storage.Single("select id, email from public.accounts where id = $1", []interface{}{&id})
+
+	err := data.Scan(&account.Id, &account.Email)
+	if err != nil {
+		fmt.Printf("Failed to fetch account with id %v", id)
+		fmt.Println(err)
+		return account, err
+	}
+
+	fmt.Println(&account)
+	return account, nil
+}
+
 func (accountService *Accounts) CreateAccount(newAccount *dtos.CreateAccountRequest) (uuid.UUID, error) {
 	_, err := accountService.UserExists(newAccount.Email)
 

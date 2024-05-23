@@ -91,6 +91,21 @@ CREATE TABLE IF NOT EXISTS public.key_types
     CONSTRAINT key_types_pkey PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS public.mfa_method_types
+(
+    id smallint NOT NULL,
+    name character varying(100) COLLATE pg_catalog."default",
+    CONSTRAINT mfa_method_types_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS public.mfa_methods
+(
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    type_id smallint NOT NULL,
+    value character varying COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT mfa_methods_pkey PRIMARY KEY (id, type_id, value)
+);
+
 CREATE TABLE IF NOT EXISTS public.rac_devices
 (
     id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -198,6 +213,13 @@ ALTER TABLE IF EXISTS public.events
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
+
+
+ALTER TABLE IF EXISTS public.mfa_methods
+    ADD CONSTRAINT mfa_methods_type_id FOREIGN KEY (type_id)
+    REFERENCES public.mfa_method_types (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
 
 
 ALTER TABLE IF EXISTS public.rac_devices
