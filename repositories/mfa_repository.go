@@ -121,3 +121,16 @@ func (m *MfaRepository) Add(secret string, typeId int, user uuid.UUID, email sql
 	}
 	return true, nil
 }
+
+func (m *MfaRepository) Delete(id uuid.UUID) bool {
+
+	query := `
+		DELETE FROM public.mfa_methods
+		WHERE id = $1
+	`
+	result := m.Storage.Exec(query, []interface{}{
+		&id,
+	})
+
+	return result
+}
