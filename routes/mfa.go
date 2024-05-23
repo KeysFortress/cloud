@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pquerna/otp"
 
+	"leanmeal/api/dtos"
 	"leanmeal/api/interfaces"
 	"leanmeal/api/middlewhere"
 	"leanmeal/api/repositories"
@@ -20,6 +21,7 @@ type MfaController struct {
 	AccountsRepository repositories.Accounts
 	MfaRepository      repositories.MfaRepository
 	EmailService       interfaces.MailService
+	JwtService         interfaces.JwtService
 }
 
 func (m *MfaController) setup(ctx *gin.Context) {
@@ -125,7 +127,42 @@ func (m *MfaController) pickMethod(ctx *gin.Context) {
 }
 
 func (m *MfaController) performMethod(ctx *gin.Context) {
-	return
+	id := ctx.MustGet("ID")
+	deviceKey := ctx.MustGet("DeviceKey")
+	request := &dtos.MfaCodeRequest{}
+	if err := ctx.BindJSON(request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
+		return
+	}
+
+	m.MfaRepository.Storage.Open()
+	methods, err := m.MfaRepository.GetForUser(id.(uuid.UUID))
+	m.MfaRepository.Storage.Close()
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+	}
+
+	var valid bool
+	for _, method := range methods {
+		valid, err = m.TotpService.VerifyTOTP(request.Code, method.Value, 30, otp.AlgorithmMD5)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if valid {
+			break
+		}
+	}
+
+	if !valid {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Failed to verify method, code doesn't match"})
+		return
+	}
+
+	token := m.JwtService.IssueToken("user", id.(string), deviceKey.(string))
+	ctx.JSON(http.StatusOK, token)
 }
 
 func (m *MfaController) all(ctx *gin.Context) {
