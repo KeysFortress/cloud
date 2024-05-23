@@ -34,16 +34,16 @@ func (m *MfaController) setup(ctx *gin.Context) {
 	}
 
 	m.AccountsRepository.Storage.Open()
+	defer m.AccountsRepository.Storage.Close()
+
 	account, err := m.AccountsRepository.GetById(id.(uuid.UUID))
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
-		m.AccountsRepository.Storage.Close()
 		return
 	}
 
 	configured, err := m.MfaRepository.IsConfigured(id.(uuid.UUID))
-	m.MfaRepository.Storage.Close()
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Denied, failed to fetch existing methods, contact an administrator"})
@@ -69,7 +69,6 @@ func (m *MfaController) setup(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Failed to save new secret, aborted operation!"})
 		return
 	}
-
 	ctx.JSON(http.StatusOK, secret)
 }
 
@@ -98,7 +97,7 @@ func (m *MfaController) pickMethod(ctx *gin.Context) {
 
 	m.MfaRepository.Storage.Open()
 	emails, err := m.MfaRepository.GetForUserByType(id.(uuid.UUID), typeId)
-	m.MfaRepository.Storage.Close()
+	defer m.MfaRepository.Storage.Close()
 
 	if err != nil {
 		result := "Failed to retrive emails methods for user " + id.(string)
@@ -137,7 +136,7 @@ func (m *MfaController) performMethod(ctx *gin.Context) {
 
 	m.MfaRepository.Storage.Open()
 	methods, err := m.MfaRepository.GetForUser(id.(uuid.UUID))
-	m.MfaRepository.Storage.Close()
+	defer m.MfaRepository.Storage.Close()
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
@@ -170,7 +169,7 @@ func (m *MfaController) all(ctx *gin.Context) {
 
 	m.MfaRepository.Storage.Open()
 	methods, err := m.MfaRepository.GetForUser(id.(uuid.UUID))
-	m.MfaRepository.Storage.Close()
+	defer m.MfaRepository.Storage.Close()
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
@@ -190,16 +189,17 @@ func (m *MfaController) add(ctx *gin.Context) {
 	}
 
 	m.MfaRepository.Storage.Open()
+	defer m.MfaRepository.Storage.Close()
+
 	account, err := m.AccountsRepository.GetById(id.(uuid.UUID))
+
 	if err != nil {
-		m.MfaRepository.Storage.Close()
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
 		return
 	}
 
 	secret, err := m.TotpService.GenerateTOTP(account.Name)
 	if err != nil {
-		m.MfaRepository.Storage.Close()
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
 		return
 	}
@@ -214,7 +214,19 @@ func (m *MfaController) add(ctx *gin.Context) {
 }
 
 func (m *MfaController) delete(ctx *gin.Context) {
-	return
+	id := ctx.Request.FormValue("id")
+	uuid, err := utils.ParseUUID(id)
+	if err != nil {
+		fmt.Println("id is not in a valid format")
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
+	m.MfaRepository.Storage.Open()
+	removed := m.MfaRepository.Delete(uuid)
+	m.MfaRepository.Storage.Close()
+
+	ctx.JSON(http.StatusOK, removed)
 }
 
 func (m *MfaController) Init(r *gin.RouterGroup, a *middlewhere.AuthenticationMiddlewhere) {
