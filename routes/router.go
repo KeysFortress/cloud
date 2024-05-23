@@ -31,7 +31,15 @@ func (r *ApplicationRouter) Init() {
 		},
 	}
 
-	mfaController := &MfaController{}
+	mfaController := &MfaController{
+		TotpService: &implementations.TimeBasedService{},
+		AccountsRepository: repositories.Accounts{
+			Storage: r.Storage,
+		},
+		MfaRepository: repositories.MfaRepository{
+			Storage: r.Storage,
+		},
+	}
 
 	passwordsController := &PasswordsController{
 		PasswordService: r.PasswordService,
