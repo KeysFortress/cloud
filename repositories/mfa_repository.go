@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -36,7 +37,7 @@ func (m *MfaRepository) IsConfigured(id uuid.UUID) (bool, error) {
 
 func (m *MfaRepository) GetForUser(id uuid.UUID) ([]models.UserMfa, error) {
 	query := `
-		SELECT id, type_id, value FROM mfa_methods
+		SELECT id, type_id, value, address FROM mfa_methods
 		WHERE user_id = $1
 	`
 
@@ -48,8 +49,12 @@ func (m *MfaRepository) GetForUser(id uuid.UUID) ([]models.UserMfa, error) {
 	for queryResult.Next() {
 		var mfaResult models.UserMfa
 
-		err := queryResult.Scan(mfaResult.Id, mfaResult.TypeId, mfaResult.Value)
-
+		err := queryResult.Scan(
+			mfaResult.Id,
+			mfaResult.TypeId,
+			mfaResult.Value,
+			mfaResult.Address,
+		)
 		if err != nil {
 			return []models.UserMfa{}, err
 		}
@@ -62,7 +67,7 @@ func (m *MfaRepository) GetForUser(id uuid.UUID) ([]models.UserMfa, error) {
 
 func (m *MfaRepository) GetForUserByType(id uuid.UUID, typeId int) ([]models.UserMfa, error) {
 	query := `
-		SELECT id, type_id, value FROM mfa_methods
+		SELECT id, type_id, address value FROM mfa_methods
 		WHERE user_id = $1 and type_id = $2
 	`
 
@@ -75,7 +80,12 @@ func (m *MfaRepository) GetForUserByType(id uuid.UUID, typeId int) ([]models.Use
 	for queryResult.Next() {
 		var mfaResult models.UserMfa
 
-		err := queryResult.Scan(mfaResult.Id, mfaResult.TypeId, mfaResult.Value)
+		err := queryResult.Scan(
+			mfaResult.Id,
+			mfaResult.TypeId,
+			mfaResult.Value,
+			mfaResult.Address,
+		)
 
 		if err != nil {
 			return []models.UserMfa{}, err
@@ -87,11 +97,11 @@ func (m *MfaRepository) GetForUserByType(id uuid.UUID, typeId int) ([]models.Use
 	return result, nil
 }
 
-func (m *MfaRepository) Add(secret string, typeId int, user uuid.UUID) (bool, error) {
+func (m *MfaRepository) Add(secret string, typeId int, user uuid.UUID, email sql.NullString) (bool, error) {
 	qeury := `
 	INSERT INTO public.mfa_methods(
-		type_id, value, user_id)
-		VALUES ($2, $1, $3)
+		type_id, value, user_id, address)
+		VALUES ($2, $1, $3, $4)
 		RETURNING id;
 	`
 
@@ -99,6 +109,7 @@ func (m *MfaRepository) Add(secret string, typeId int, user uuid.UUID) (bool, er
 		secret,
 		typeId,
 		user,
+		email,
 	})
 
 	var recordId uuid.UUID
