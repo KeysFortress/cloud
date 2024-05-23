@@ -2,6 +2,7 @@ package implementations
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/pquerna/otp"
@@ -10,9 +11,10 @@ import (
 )
 
 type TimeBasedService struct {
+	Issuer string
 }
 
-func (t *TimeBasedService) GenerateTOTP(secret string, period int, algorithm otp.Algorithm) (string, error) {
+func (t *TimeBasedService) GenerateTOTPCode(secret string, period int, algorithm otp.Algorithm) (string, error) {
 
 	code, err := totp.GenerateCodeCustom(secret, time.Now(), totp.ValidateOpts{
 		Algorithm: algorithm,
@@ -27,7 +29,7 @@ func (t *TimeBasedService) GenerateTOTP(secret string, period int, algorithm otp
 	return code, nil
 }
 
-func (t *TimeBasedService) GenerateHOTP(secret string) ([]string, error) {
+func (t *TimeBasedService) GenerateHOTPCode(secret string) ([]string, error) {
 
 	key, err := hotp.Generate(hotp.GenerateOpts{
 		Issuer:      "Example Corp",
@@ -42,7 +44,7 @@ func (t *TimeBasedService) GenerateHOTP(secret string) ([]string, error) {
 	var codes []string
 
 	for i := 0; i < 5; i++ {
-		code, err := t.GenerateTOTP(key.Secret(), int(key.Period()), key.Algorithm())
+		code, err := t.GenerateTOTPCode(key.Secret(), int(key.Period()), key.Algorithm())
 		if err != nil {
 			fmt.Println("Failed to generate code for HOTP")
 			return []string{}, nil
@@ -64,4 +66,22 @@ func (t *TimeBasedService) VerifyTOTP(code string, secret string, period int, al
 	}
 
 	return isValid, nil
+}
+
+func (t *TimeBasedService) GenerateTOTP(accountName string) (string, error) {
+	key, err := totp.Generate(totp.GenerateOpts{
+		Issuer:      t.Issuer,
+		AccountName: accountName,
+	})
+
+	if err != nil {
+		log.Fatal(err)
+		return "", err
+	}
+
+	fmt.Println("Key URL:", key.URL())
+
+	fmt.Println("Secret:", key.Secret())
+
+	return key.Secret(), nil
 }
