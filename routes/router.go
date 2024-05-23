@@ -46,6 +46,7 @@ func (r *ApplicationRouter) Init() {
 			Smtp:     r.Configuration.GetKey("smtp").(string),
 			Port:     r.Configuration.GetKey("port").(int),
 		},
+		JwtService: r.Jwt,
 	}
 
 	passwordsController := &PasswordsController{
