@@ -3,5 +3,10 @@
     "jwt-key": "ebMRsLYm34aTZ5IjfyhM70Yp0ZUjE3h6XZq+5js/bf4=",
     "jwt-issuer": "Collaborativesoft",
     "Port": ":8080",
-    "domain": "https://kristifor.kidswlan.de"
+    "domain": "https://kristifor.kidswlan.de",
+    "from": "support@keysfortress.net",
+    "smtp-password": "1234",
+    "ssl": true,
+    "smtp": "smtp://",
+    "smtp-port": 2225
 }

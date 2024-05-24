@@ -32,7 +32,7 @@ func (m *MfaRepository) IsConfigured(id uuid.UUID) (bool, error) {
 		return false, err
 	}
 
-	return count == 0, nil
+	return count > 0, nil
 }
 
 func (m *MfaRepository) GetForUser(id uuid.UUID) ([]models.UserMfa, error) {

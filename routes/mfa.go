@@ -43,8 +43,42 @@ func (m *MfaController) setup(ctx *gin.Context) {
 		return
 	}
 
-	configured, err := m.MfaRepository.IsConfigured(id.(uuid.UUID))
+	secret, err := m.TotpService.GenerateTOTP(account.Email)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
 
+	ctx.JSON(http.StatusOK, secret)
+}
+
+func (m *MfaController) finishSetup(ctx *gin.Context) {
+	request := &dtos.FinishMfaSetup{}
+
+	if err := ctx.BindJSON(request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"Message": "Failed to decode code, aborting request",
+		})
+		return
+	}
+
+	id := ctx.MustGet("ID")
+	deviceKey := ctx.MustGet("DeviceKey")
+	if id == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
+	m.AccountsRepository.Storage.Open()
+	defer m.AccountsRepository.Storage.Close()
+
+	account, err := m.AccountsRepository.GetById(id.(uuid.UUID))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
+	configured, err := m.MfaRepository.IsConfigured(id.(uuid.UUID))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Denied, failed to fetch existing methods, contact an administrator"})
 		return
@@ -55,13 +89,14 @@ func (m *MfaController) setup(ctx *gin.Context) {
 		return
 	}
 
-	secret, err := m.TotpService.GenerateTOTP(account.Email)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+	valid, err := m.TotpService.VerifyTOTP(request.Code, request.Secret, 30, otp.AlgorithmMD5)
+
+	if err != nil || !valid {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request, failed to validate code"})
 		return
 	}
 
-	_, err = m.MfaRepository.Add(secret, 2, id.(uuid.UUID), sql.NullString{
+	_, err = m.MfaRepository.Add(request.Secret, 2, id.(uuid.UUID), sql.NullString{
 		String: account.Email,
 	})
 
@@ -69,7 +104,9 @@ func (m *MfaController) setup(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Failed to save new secret, aborted operation!"})
 		return
 	}
-	ctx.JSON(http.StatusOK, secret)
+
+	token := m.JwtService.IssueToken("user", id.(string), deviceKey.(string))
+	ctx.JSON(http.StatusOK, token)
 }
 
 func (m *MfaController) pickMethod(ctx *gin.Context) {
@@ -204,7 +241,7 @@ func (m *MfaController) add(ctx *gin.Context) {
 		return
 	}
 
-	created, err := m.MfaRepository.Add(secret, request.TypeId, id.(uuid.UUID), request.Email)
+	created, err := m.MfaRepository.Add(secret.Secret, request.TypeId, id.(uuid.UUID), request.Email)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
 		return
@@ -233,9 +270,10 @@ func (m *MfaController) Init(r *gin.RouterGroup, a *middlewhere.AuthenticationMi
 	controller := r.Group("mfa")
 	controller.Use(a.AuthorizeMFA())
 
-	controller.GET("setup", m.setup)
+	controller.GET("begin-setup", m.setup)
 	controller.GET("pick-method/:type", m.pickMethod)
 	controller.POST("perform-method", m.performMethod)
+	controller.POST("finish-setup", m.finishSetup)
 
 	authorizedController := r.Group("user-mfa")
 	authorizedController.Use(a.Authorize())

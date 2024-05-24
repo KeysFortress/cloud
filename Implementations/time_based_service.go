@@ -8,6 +8,8 @@ import (
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/hotp"
 	"github.com/pquerna/otp/totp"
+
+	"leanmeal/api/dtos"
 )
 
 type TimeBasedService struct {
@@ -32,7 +34,7 @@ func (t *TimeBasedService) GenerateTOTPCode(secret string, period int, algorithm
 func (t *TimeBasedService) GenerateHOTPCode(secret string) ([]string, error) {
 
 	key, err := hotp.Generate(hotp.GenerateOpts{
-		Issuer:      "Example Corp",
+		Issuer:      t.Issuer,
 		AccountName: "user@example.com",
 		Secret:      []byte(secret),
 	})
@@ -68,7 +70,7 @@ func (t *TimeBasedService) VerifyTOTP(code string, secret string, period int, al
 	return isValid, nil
 }
 
-func (t *TimeBasedService) GenerateTOTP(accountName string) (string, error) {
+func (t *TimeBasedService) GenerateTOTP(accountName string) (dtos.MfaSetupResponse, error) {
 	key, err := totp.Generate(totp.GenerateOpts{
 		Issuer:      t.Issuer,
 		AccountName: accountName,
@@ -76,12 +78,15 @@ func (t *TimeBasedService) GenerateTOTP(accountName string) (string, error) {
 
 	if err != nil {
 		log.Fatal(err)
-		return "", err
+		return dtos.MfaSetupResponse{}, err
 	}
 
 	fmt.Println("Key URL:", key.URL())
 
 	fmt.Println("Secret:", key.Secret())
 
-	return key.Secret(), nil
+	return dtos.MfaSetupResponse{
+		Secret: key.Secret(),
+		QrCode: key.URL(),
+	}, nil
 }

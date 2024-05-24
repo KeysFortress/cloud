@@ -30,9 +30,10 @@ func (r *ApplicationRouter) Init() {
 			Storage: r.Storage,
 		},
 	}
-
 	mfaController := &MfaController{
-		TotpService: &implementations.TimeBasedService{},
+		TotpService: &implementations.TimeBasedService{
+			Issuer: r.Configuration.GetKey("jwt-issuer").(string),
+		},
 		AccountsRepository: repositories.Accounts{
 			Storage: r.Storage,
 		},
@@ -44,11 +45,10 @@ func (r *ApplicationRouter) Init() {
 			Password: r.Configuration.GetKey("smtp-password").(string),
 			SkipSSl:  r.Configuration.GetKey("ssl").(bool),
 			Smtp:     r.Configuration.GetKey("smtp").(string),
-			Port:     r.Configuration.GetKey("port").(int),
+			Port:     int(r.Configuration.GetKey("smtp-port").(float64)),
 		},
 		JwtService: r.Jwt,
 	}
-
 	passwordsController := &PasswordsController{
 		PasswordService: r.PasswordService,
 		PasswordRepository: repositories.PasswordRepository{
