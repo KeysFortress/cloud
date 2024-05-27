@@ -2,17 +2,16 @@ package implementations
 
 import (
 	"crypto/ed25519"
-	"crypto/rand"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/sync/syncmap"
 
 	"leanmeal/api/dtos"
+	"leanmeal/api/utils"
 )
 
 type AuthenticationService struct {
@@ -23,7 +22,7 @@ type AuthenticationService struct {
 func (authService *AuthenticationService) GetMessage(email *string, id *uuid.UUID) dtos.InitAuthReponse {
 
 	uuid := uuid.New()
-	code := generateRandomString(32)
+	code := utils.GenerateRandomString(32)
 
 	authResponse := dtos.StoredAuthRequest{
 		Id:       *id,
@@ -166,15 +165,4 @@ func (authService *AuthenticationService) Start() {
 		})
 	}
 
-}
-
-// generateRandomString generates a random string of specified length
-func generateRandomString(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	var result string
-	for i := 0; i < length; i++ {
-		randomIndex, _ := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
-		result += string(charset[randomIndex.Int64()])
-	}
-	return result
 }
