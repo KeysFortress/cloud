@@ -14,7 +14,7 @@ type AccessKeysRepository struct {
 	Storage          interfaces.Storage
 }
 
-func (accessKeys *AccessKeysRepository) Add(id *uuid.UUID, key *string) interface{} {
+func (accessKeys *AccessKeysRepository) Add(id *uuid.UUID, key *string) (uuid.UUID, error) {
 	query := `
 					INSERT INTO public.associated_account_access_keys(
 					account_id, key, created_at)
@@ -29,9 +29,10 @@ func (accessKeys *AccessKeysRepository) Add(id *uuid.UUID, key *string) interfac
 	if err != nil {
 		fmt.Printf("Failed to add access key for account %v", id)
 		fmt.Println(err)
+		return uuid.UUID{}, err
 	}
 
-	return createdId
+	return createdId, nil
 }
 
 func (accesKeys *AccessKeysRepository) GetAccountKeys(id uuid.UUID) []string {
