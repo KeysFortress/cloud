@@ -92,3 +92,20 @@ func (accountService *Accounts) Get() []models.Account {
 
 	return accounts
 }
+
+func (accountService *Accounts) IsEmpty() (bool, error) {
+	query := `
+		SELECT COUNT(*) from public.accounts
+	`
+
+	qeuryResult := accountService.Storage.Single(query, []interface{}{})
+
+	var count int
+	err := qeuryResult.Scan(&count)
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
