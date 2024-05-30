@@ -4,7 +4,6 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -18,12 +17,32 @@ type SetupController struct {
 	accountRepository    repositories.Accounts
 	accessKeysRepository repositories.AccessKeysRepository
 	setupPath            string
+	domain               string
+}
+
+func (s *SetupController) state(ctx *gin.Context) {
+	s.accountRepository.Storage.Open()
+	defer s.accountRepository.Storage.Close()
+
+	state, err := s.accountRepository.IsEmpty()
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, state)
+}
+
+func (s *SetupController) init(ctx *gin.Context) {
+
+	result := "keysfortress://url=" + s.domain + "&&setup=" + s.domain + "/v1/setup/start"
+	ctx.JSON(http.StatusOK, result)
 }
 
 func (s *SetupController) setup(ctx *gin.Context) {
-
 	request := dtos.SetupRequest{}
-	if err := ctx.BindJSON(request); err != nil {
+	if err := ctx.BindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
 		return
 	}
@@ -45,22 +64,21 @@ func (s *SetupController) setup(ctx *gin.Context) {
 		Uuid:        uuid.String(),
 		Code:        code,
 		Name:        request.Email,
-		ApprovedKey: request.PublicKey,
+		ApprovedKey: request.Base64Pk,
 	})
 
-	hostname, err := os.Hostname()
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
-		return
-	}
-
-	result := "keysfortres://url=" + hostname + "&&setup=" + hostname + s.setupPath + "&&secret=" + code + "&&id=" + uuid.String()
-	ctx.JSON(http.StatusOK, result)
+	// result := "keysfortress://url=" + s.domain + "&&setup=" + s.domain + s.setupPath + "&&secret=" + code + "&&id=" + uuid.String()
+	ctx.JSON(http.StatusOK, gin.H{
+		"url":    s.domain,
+		"setup":  s.domain + s.setupPath,
+		"secret": code,
+		"id":     uuid.String(),
+	})
 }
 
 func (s *SetupController) finish(ctx *gin.Context) {
 	request := dtos.FinishAuthResponse{}
-	if err := ctx.BindJSON(request); err != nil {
+	if err := ctx.BindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
 		return
 	}
@@ -116,8 +134,10 @@ func (s *SetupController) finish(ctx *gin.Context) {
 }
 
 func (s *SetupController) Init(r *gin.RouterGroup) {
-
 	controller := r.Group("setup")
-	controller.POST("init", s.setup)
+
+	controller.GET("state", s.state)
+	controller.GET("init", s.init)
+	controller.POST("start", s.setup)
 	controller.POST("finish", s.finish)
 }

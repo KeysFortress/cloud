@@ -19,7 +19,6 @@ type ApplicationRouter struct {
 }
 
 func (r *ApplicationRouter) Init() {
-
 	authController := &AuthenticationController{
 		JwtService:    r.Jwt,
 		Configuration: r.Configuration,
@@ -88,6 +87,16 @@ func (r *ApplicationRouter) Init() {
 		},
 		TotpService: &implementations.TimeBasedService{},
 	}
+	setupController := &SetupController{
+		accountRepository: repositories.Accounts{
+			Storage: r.Storage,
+		},
+		accessKeysRepository: repositories.AccessKeysRepository{
+			Storage: r.Storage,
+		},
+		setupPath: "v1/setup/finish",
+		domain:    r.Configuration.GetKey("domain").(string),
+	}
 
 	authController.Init(r.V1)
 	passwordsController.Init(r.V1, r.AuthMiddlewhere)
@@ -96,4 +105,5 @@ func (r *ApplicationRouter) Init() {
 	eventsController.Init(r.V1, r.AuthMiddlewhere)
 	totpController.Init(r.V1, r.AuthMiddlewhere)
 	mfaController.Init(r.V1, r.AuthMiddlewhere)
+	setupController.Init(r.V1)
 }

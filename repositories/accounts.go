@@ -107,5 +107,5 @@ func (accountService *Accounts) IsEmpty() (bool, error) {
 		return false, err
 	}
 
-	return count > 0, nil
+	return count == 0, nil
 }

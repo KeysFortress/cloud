@@ -1,6 +1,6 @@
 package dtos
 
 type SetupRequest struct {
-	Email     string
-	PublicKey string
+	Email    string
+	Base64Pk string
 }
