@@ -31,6 +31,7 @@ func (authService *AuthenticationService) GetMessage(email *string, id *uuid.UUI
 		Uuid:     uuid.String(),
 		Time:     time.Now().UTC().Add(time.Duration(time.Minute * 10)),
 		Approved: false,
+		Ignore:   false,
 	}
 
 	authService.AuthRequests.LoadOrStore(uuid, authResponse)
@@ -148,8 +149,8 @@ func (authService *AuthenticationService) GetAuthRequest(id uuid.UUID) (dtos.Sto
 }
 
 func (authService *AuthenticationService) StoreAuthRequest(request dtos.StoredAuthRequest) bool {
-	_, err := authService.AuthRequests.LoadOrStore(request.Id, request)
-	return !err
+	authService.AuthRequests.Store(request.Id, request)
+	return true
 }
 
 func (authService *AuthenticationService) Start() {
@@ -169,7 +170,7 @@ func (authService *AuthenticationService) Start() {
 		authService.AuthRequests.Range(func(key, value any) bool {
 			storedRequest := value.(dtos.StoredAuthRequest)
 			expired := storedRequest.Time.UTC().Before(time.Now().UTC())
-			if expired {
+			if expired && !storedRequest.Ignore {
 				authService.AuthRequests.Delete(key)
 			}
 

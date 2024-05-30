@@ -63,10 +63,12 @@ func (s *SetupController) setup(ctx *gin.Context) {
 	uuid := uuid.New()
 
 	s.authenticationService.StoreAuthRequest(dtos.StoredAuthRequest{
+		Id:          uuid,
 		Uuid:        uuid.String(),
 		Code:        code,
 		Name:        request.Email,
 		ApprovedKey: request.Base64Pk,
+		Ignore:      true,
 	})
 
 	// result := "keysfortress://url=" + s.domain + "&&setup=" + s.domain + s.setupPath + "&&secret=" + code + "&&id=" + uuid.String()

@@ -17,7 +17,7 @@ type AccessKeysRepository struct {
 func (accessKeys *AccessKeysRepository) Add(id *uuid.UUID, key *string) (uuid.UUID, error) {
 	query := `
 					INSERT INTO public.associated_account_access_keys(
-					account_id, key, created_at)
+					account_id, access_key, created_at)
 					VALUES ($1, $2, $3)
 					RETURNING id
 			`

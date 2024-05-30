@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -22,6 +23,10 @@ func (accountService *Accounts) UserExists(email string) (models.Account, error)
 
 	err := data.Scan(&account.Id, &account.Email)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return models.Account{}, nil
+		}
+
 		fmt.Printf("Failed to fetch account with email %v", email)
 		fmt.Println(err)
 		return account, err
@@ -50,18 +55,17 @@ func (accountService *Accounts) CreateAccount(newAccount *dtos.CreateAccountRequ
 	_, err := accountService.UserExists(newAccount.Email)
 
 	if err != nil {
-		return uuid.UUID{}, nil
+		return uuid.UUID{}, err
 	}
 
 	sql := `
 	INSERT INTO public.accounts(
-		 email, name, created_at, enabled)
-		VALUES ($1, $2, $3, $4)
+		 email, created_at, enabled)
+		VALUES ($1,  $2, $3)
 		RETURNING id
 	`
 	queryResult := accountService.Storage.Add(&sql, &[]interface{}{
 		newAccount.Email,
-		newAccount.Name,
 		time.Now().UTC(),
 		true,
 	})
