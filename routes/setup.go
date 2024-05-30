@@ -69,10 +69,10 @@ func (s *SetupController) setup(ctx *gin.Context) {
 
 	// result := "keysfortress://url=" + s.domain + "&&setup=" + s.domain + s.setupPath + "&&secret=" + code + "&&id=" + uuid.String()
 	ctx.JSON(http.StatusOK, gin.H{
-		"url":    s.domain,
-		"setup":  s.domain + s.setupPath,
-		"secret": code,
-		"id":     uuid.String(),
+		"url":      s.domain,
+		"setupUrl": s.domain + s.setupPath,
+		"secret":   code,
+		"id":       uuid.String(),
 	})
 }
 
