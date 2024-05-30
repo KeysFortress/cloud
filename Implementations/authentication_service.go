@@ -125,19 +125,31 @@ func (authService *AuthenticationService) ExchangeCodeForToken(code uuid.UUID) (
 
 func (authService *AuthenticationService) ExchangeCodeForPublicKey(code uuid.UUID) (string, bool) {
 	request, ok := authService.AuthRequests.Load(code)
-
 	if !ok {
 		return "", false
 	}
 
 	authRequest := request.(dtos.StoredAuthRequest)
-
 	if !authRequest.Approved {
 		return "", true
 	}
 
 	return authRequest.ApprovedKey, true
+}
 
+func (authService *AuthenticationService) GetAuthRequest(id uuid.UUID) (dtos.StoredAuthRequest, error) {
+	request, ok := authService.AuthRequests.Load(id)
+	if !ok {
+		return dtos.StoredAuthRequest{}, errors.New("request id missing")
+	}
+
+	authRequest := request.(dtos.StoredAuthRequest)
+	return authRequest, nil
+}
+
+func (authService *AuthenticationService) StoreAuthRequest(request dtos.StoredAuthRequest) bool {
+	_, err := authService.AuthRequests.LoadOrStore(request.Id, request)
+	return !err
 }
 
 func (authService *AuthenticationService) Start() {

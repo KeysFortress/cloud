@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 
-	implementations "leanmeal/api/Implementations"
 	"leanmeal/api/dtos"
 	"leanmeal/api/interfaces"
 	"leanmeal/api/repositories"
@@ -116,17 +115,6 @@ func (ac *AuthenticationController) pickMethod(ctx *gin.Context) {
 }
 
 func (ac *AuthenticationController) Init(r *gin.RouterGroup) {
-	domain := ac.Configuration.GetKey("domain")
-
-	if domain == nil {
-		panic("Domain is not set in the configuration file")
-	}
-
-	ac.AuthenticationService = &implementations.AuthenticationService{
-		Domain: domain.(string),
-	}
-
-	go ac.AuthenticationService.Start()
 
 	r.GET("/begin-request/:email", ac.beginRequest)
 	r.GET("/login/:code", ac.waitLogin)

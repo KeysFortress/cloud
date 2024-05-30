@@ -13,4 +13,6 @@ type AuthenticationService interface {
 	ExchangeCodeForToken(code uuid.UUID) (uuid.UUID, bool)
 	GetRequestById(id uuid.UUID) (uuid.UUID, error)
 	ExchangeCodeForPublicKey(code uuid.UUID) (string, bool)
+	StoreAuthRequest(request dtos.StoredAuthRequest) bool
+	GetAuthRequest(id uuid.UUID) (dtos.StoredAuthRequest, error)
 }

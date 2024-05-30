@@ -9,15 +9,17 @@ import (
 	"github.com/google/uuid"
 
 	"leanmeal/api/dtos"
+	"leanmeal/api/interfaces"
 	"leanmeal/api/repositories"
 	"leanmeal/api/utils"
 )
 
 type SetupController struct {
-	accountRepository    repositories.Accounts
-	accessKeysRepository repositories.AccessKeysRepository
-	setupPath            string
-	domain               string
+	accountRepository     repositories.Accounts
+	accessKeysRepository  repositories.AccessKeysRepository
+	setupPath             string
+	domain                string
+	authenticationService interfaces.AuthenticationService
 }
 
 func (s *SetupController) state(ctx *gin.Context) {
@@ -60,7 +62,7 @@ func (s *SetupController) setup(ctx *gin.Context) {
 	code := utils.GenerateRandomString(32)
 	uuid := uuid.New()
 
-	ctx.Set("AuthRequest", dtos.StoredAuthRequest{
+	s.authenticationService.StoreAuthRequest(dtos.StoredAuthRequest{
 		Uuid:        uuid.String(),
 		Code:        code,
 		Name:        request.Email,
@@ -70,7 +72,7 @@ func (s *SetupController) setup(ctx *gin.Context) {
 	// result := "keysfortress://url=" + s.domain + "&&setup=" + s.domain + s.setupPath + "&&secret=" + code + "&&id=" + uuid.String()
 	ctx.JSON(http.StatusOK, gin.H{
 		"url":      s.domain,
-		"setupUrl": s.domain + s.setupPath,
+		"setupUrl": s.domain + "/" + s.setupPath,
 		"secret":   code,
 		"id":       uuid.String(),
 	})
@@ -85,7 +87,13 @@ func (s *SetupController) finish(ctx *gin.Context) {
 
 	s.accountRepository.Storage.Open()
 	defer s.accountRepository.Storage.Close()
-	initialRequest := ctx.MustGet("AuthRequest").(dtos.StoredAuthRequest)
+
+	initialRequest, err := s.authenticationService.GetAuthRequest(request.Uuid)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
 	publicKey, err := base64.StdEncoding.DecodeString(initialRequest.ApprovedKey)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})

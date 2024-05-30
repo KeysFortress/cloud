@@ -19,9 +19,20 @@ type ApplicationRouter struct {
 }
 
 func (r *ApplicationRouter) Init() {
+	domain := r.Configuration.GetKey("domain")
+	if domain == nil {
+		panic("Domain is not set in the configuration file")
+	}
+
+	authService := &implementations.AuthenticationService{
+		Domain: domain.(string),
+	}
+	go authService.Start()
+
 	authController := &AuthenticationController{
-		JwtService:    r.Jwt,
-		Configuration: r.Configuration,
+		AuthenticationService: authService,
+		JwtService:            r.Jwt,
+		Configuration:         r.Configuration,
 		AccountRepository: repositories.Accounts{
 			Storage: r.Storage,
 		},
@@ -94,8 +105,9 @@ func (r *ApplicationRouter) Init() {
 		accessKeysRepository: repositories.AccessKeysRepository{
 			Storage: r.Storage,
 		},
-		setupPath: "v1/setup/finish",
-		domain:    r.Configuration.GetKey("domain").(string),
+		setupPath:             "v1/setup/finish",
+		domain:                r.Configuration.GetKey("domain").(string),
+		authenticationService: authService,
 	}
 
 	authController.Init(r.V1)
