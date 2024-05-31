@@ -23,6 +23,7 @@ func main() {
 	config := implementations.Configuration{}
 	config.Load()
 	connectionString := config.GetKey("ConnectionString").(string)
+	firebaseKey := config.GetKey("FirebaseServerKey").(string)
 
 	jwt := implementations.JwtService{}
 	jwt.Secret = config.GetKey("jwt-key").(string)
@@ -36,6 +37,10 @@ func main() {
 	initializationService := implementations.Initialization{
 		Storage: storage,
 	}
+	firebaseMessageService := implementations.FirebaseCloudMessaging{
+		ServerKey: firebaseKey,
+	}
+
 	// Middlewhere setups
 	authMiddlewhere := middlewhere.AuthenticationMiddlewhere{
 		JwtService: &jwt,
@@ -48,23 +53,24 @@ func main() {
 	}
 
 	//Init the server
-	startServer(&config, &storage, &passwordService, &jwt, authMiddlewhere, &cors)
+	startServer(&config, &storage, &passwordService, &jwt, authMiddlewhere, &cors, &firebaseMessageService)
 }
 
 func startServer(configuration interfaces.Configuration, storage interfaces.Storage, passwordService interfaces.PasswordService,
-	jwt interfaces.JwtService, authMiddlewhere middlewhere.AuthenticationMiddlewhere, cors *gin.HandlerFunc) {
+	jwt interfaces.JwtService, authMiddlewhere middlewhere.AuthenticationMiddlewhere, cors *gin.HandlerFunc, firebaseCloudMessaging interfaces.FirebaseCloudMessaging) {
 	port := configuration.GetKey("Port").(string)
 
 	router := gin.New()
 	router.Use(*cors)
 	v1 := router.Group("/v1")
 	appRouter := routes.ApplicationRouter{
-		Configuration:   configuration,
-		Storage:         storage,
-		PasswordService: passwordService,
-		AuthMiddlewhere: &authMiddlewhere,
-		Jwt:             jwt,
-		V1:              v1,
+		Configuration:     configuration,
+		Storage:           storage,
+		PasswordService:   passwordService,
+		AuthMiddlewhere:   &authMiddlewhere,
+		Jwt:               jwt,
+		FirebaseMessaging: firebaseCloudMessaging,
+		V1:                v1,
 	}
 
 	appRouter.Init()

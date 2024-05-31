@@ -10,15 +10,17 @@ import (
 )
 
 type ApplicationRouter struct {
-	Configuration   interfaces.Configuration
-	Storage         interfaces.Storage
-	PasswordService interfaces.PasswordService
-	AuthMiddlewhere *middlewhere.AuthenticationMiddlewhere
-	Jwt             interfaces.JwtService
-	V1              *gin.RouterGroup
+	Configuration     interfaces.Configuration
+	Storage           interfaces.Storage
+	PasswordService   interfaces.PasswordService
+	AuthMiddlewhere   *middlewhere.AuthenticationMiddlewhere
+	Jwt               interfaces.JwtService
+	FirebaseMessaging interfaces.FirebaseCloudMessaging
+	V1                *gin.RouterGroup
 }
 
 func (r *ApplicationRouter) Init() {
+	r.FirebaseMessaging.Send()
 	domain := r.Configuration.GetKey("domain")
 	if domain == nil {
 		panic("Domain is not set in the configuration file")
