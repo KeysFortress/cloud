@@ -20,3 +20,4 @@ __debug_*
 
 # Go workspace file
 go.work
+settings.json
