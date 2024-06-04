@@ -17,11 +17,12 @@ type TimeBasedService struct {
 }
 
 func (t *TimeBasedService) GenerateTOTPCode(secret string, period int, algorithm otp.Algorithm) (string, error) {
-
-	code, err := totp.GenerateCodeCustom(secret, time.Now(), totp.ValidateOpts{
+	code, err := totp.GenerateCodeCustom(secret, time.Now().UTC(), totp.ValidateOpts{
 		Algorithm: algorithm,
 		Period:    uint(period),
+		Digits:    6,
 	})
+
 	if err != nil {
 		fmt.Println("Error generating code:", err)
 		return "", err
@@ -58,9 +59,10 @@ func (t *TimeBasedService) GenerateHOTPCode(secret string) ([]string, error) {
 }
 
 func (t *TimeBasedService) VerifyTOTP(code string, secret string, period int, algorithm otp.Algorithm) (bool, error) {
-	isValid, err := totp.ValidateCustom(code, secret, time.Now(), totp.ValidateOpts{
+	isValid, err := totp.ValidateCustom(code, secret, time.Now().UTC(), totp.ValidateOpts{
 		Period:    uint(period),
 		Algorithm: algorithm,
+		Digits:    6,
 	})
 
 	if err != nil {
@@ -70,10 +72,13 @@ func (t *TimeBasedService) VerifyTOTP(code string, secret string, period int, al
 	return isValid, nil
 }
 
-func (t *TimeBasedService) GenerateTOTP(accountName string) (dtos.MfaSetupResponse, error) {
+func (t *TimeBasedService) GenerateTOTP(accountName string, period int, algorithm otp.Algorithm) (dtos.MfaSetupResponse, error) {
 	key, err := totp.Generate(totp.GenerateOpts{
 		Issuer:      t.Issuer,
 		AccountName: accountName,
+		Algorithm:   otp.AlgorithmSHA512,
+		Digits:      6,
+		Period:      uint(30),
 	})
 
 	if err != nil {
@@ -84,6 +89,11 @@ func (t *TimeBasedService) GenerateTOTP(accountName string) (dtos.MfaSetupRespon
 	fmt.Println("Key URL:", key.URL())
 
 	fmt.Println("Secret:", key.Secret())
+
+	code, _ := t.GenerateTOTPCode(key.Secret(), 30, otp.AlgorithmSHA512)
+	isValid, _ := t.VerifyTOTP(code, key.Secret(), 30, otp.AlgorithmSHA512)
+
+	fmt.Println("Code is", code, " it's ", isValid, " secret = ", key.Secret())
 
 	return dtos.MfaSetupResponse{
 		Secret: key.Secret(),
