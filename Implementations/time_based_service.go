@@ -59,15 +59,11 @@ func (t *TimeBasedService) GenerateHOTPCode(secret string) ([]string, error) {
 }
 
 func (t *TimeBasedService) VerifyTOTP(code string, secret string, period int, algorithm otp.Algorithm) (bool, error) {
-	isValid, err := totp.ValidateCustom(code, secret, time.Now().UTC(), totp.ValidateOpts{
+	isValid, _ := totp.ValidateCustom(code, secret, time.Now().UTC(), totp.ValidateOpts{
 		Period:    uint(period),
-		Algorithm: algorithm,
 		Digits:    6,
+		Algorithm: algorithm,
 	})
-
-	if err != nil {
-		return false, err
-	}
 
 	return isValid, nil
 }
@@ -76,7 +72,7 @@ func (t *TimeBasedService) GenerateTOTP(accountName string, period int, algorith
 	key, err := totp.Generate(totp.GenerateOpts{
 		Issuer:      t.Issuer,
 		AccountName: accountName,
-		Algorithm:   otp.AlgorithmSHA512,
+		Algorithm:   algorithm,
 		Digits:      6,
 		Period:      uint(30),
 	})
@@ -90,8 +86,10 @@ func (t *TimeBasedService) GenerateTOTP(accountName string, period int, algorith
 
 	fmt.Println("Secret:", key.Secret())
 
-	code, _ := t.GenerateTOTPCode(key.Secret(), 30, otp.AlgorithmSHA512)
-	isValid, _ := t.VerifyTOTP(code, key.Secret(), 30, otp.AlgorithmSHA512)
+	code, _ := t.GenerateTOTPCode(key.Secret(), 30, algorithm)
+	isValid, _ := t.VerifyTOTP(code, key.Secret(), 30, algorithm)
+
+	fmt.Println(time.Now().UTC())
 
 	fmt.Println("Code is", code, " it's ", isValid, " secret = ", key.Secret())
 
