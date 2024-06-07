@@ -113,8 +113,9 @@ func (m *MfaController) finishSetup(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Failed to save new secret, aborted operation!"})
 		return
 	}
-
-	token := m.JwtService.IssueToken("user", id.(string), deviceKey.(string))
+	parseId := id.(uuid.UUID).String()
+	parseDeviceId := deviceKey.(string)
+	token := m.JwtService.IssueToken("user", parseId, parseDeviceId)
 	ctx.JSON(http.StatusOK, token)
 }
 
