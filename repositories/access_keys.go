@@ -14,16 +14,22 @@ type AccessKeysRepository struct {
 	Storage          interfaces.Storage
 }
 
-func (accessKeys *AccessKeysRepository) Add(id *uuid.UUID, key *string) (uuid.UUID, error) {
+func (accessKeys *AccessKeysRepository) Add(id *uuid.UUID, key *string, deviceName *string, deviceType *int) (uuid.UUID, error) {
 	query := `
 					INSERT INTO public.associated_account_access_keys(
-					account_id, access_key, created_at)
-					VALUES ($1, $2, $3)
+					account_id, access_key, created_at, name, device_type_id)
+					VALUES ($1, $2, $3, $4, $5)
 					RETURNING id
 			`
 
 	var createdId uuid.UUID
-	queryResult := accessKeys.Storage.Add(&query, &[]interface{}{&id, &key, time.Now().UTC()})
+	queryResult := accessKeys.Storage.Add(&query, &[]interface{}{
+		&id,
+		&key,
+		time.Now().UTC(),
+		&deviceName,
+		deviceType,
+	})
 
 	err := queryResult.Scan(&createdId)
 	if err != nil {
