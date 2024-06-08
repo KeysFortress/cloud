@@ -77,3 +77,19 @@ INSERT INTO public.mfa_method_types(id, name)
 INSERT INTO public.mfa_method_types(id, name)
     VALUES (2, 'authenticator')
     ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.device_types(
+	id, name)
+	VALUES (1, 'Android');
+INSERT INTO public.device_types(
+	id, name)
+	VALUES (2, 'IOS');
+INSERT INTO public.device_types(
+	id, name)
+	VALUES (3, 'Windows');
+INSERT INTO public.device_types(
+	id, name)
+	VALUES (4, 'Linux');
+INSERT INTO public.device_types(
+	id, name)
+	VALUES (5, 'MacOS');
