@@ -116,6 +116,9 @@ func (r *ApplicationRouter) Init() {
 			Storage: r.Storage,
 		},
 	}
+	storage := &StorageController{
+		localStorage: r.Configuration.GetKey("storage").(string),
+	}
 
 	authController.Init(r.V1)
 	passwordsController.Init(r.V1, r.AuthMiddlewhere)
@@ -126,4 +129,5 @@ func (r *ApplicationRouter) Init() {
 	mfaController.Init(r.V1, r.AuthMiddlewhere)
 	setupController.Init(r.V1)
 	dashboardController.Init(r.V1, r.AuthMiddlewhere)
+	storage.Init(r.V1, r.AuthMiddlewhere)
 }

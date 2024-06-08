@@ -3,10 +3,12 @@ package routes
 import (
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 
 	"leanmeal/api/middlewhere"
+	"leanmeal/api/models"
 )
 
 type StorageController struct {
@@ -43,7 +45,6 @@ func (s *StorageController) download(ctx *gin.Context) {
 	ctx.Header("Content-Disposition", "attachment; filename="+filename)
 	ctx.Header("Content-Type", "application/octet-stream")
 	ctx.File(filePath)
-
 }
 
 func (s *StorageController) stream(ctx *gin.Context) {
@@ -62,7 +63,14 @@ func (s *StorageController) stream(ctx *gin.Context) {
 
 func (s *StorageController) path(ctx *gin.Context) {
 	directory := ctx.Param("directory")
-	dirPath := s.localStorage + directory
+	var dirPath string
+	if directory == "" {
+		dirPath = s.localStorage + directory
+	}
+
+	if directory != "" {
+		dirPath = s.localStorage + directory
+	}
 
 	dirInfo, err := os.Stat(dirPath)
 	if os.IsNotExist(err) || !dirInfo.IsDir() {
@@ -79,36 +87,89 @@ func (s *StorageController) path(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"directory": directory, "files": files})
 }
 
-func (s *StorageController) listFiles(dirPath string) ([]string, error) {
-	var files []string
+func (s *StorageController) listFiles(dirPath string) ([]models.StorageItem, error) {
 
 	items, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, err
 	}
-
+	var directoryFiles []models.StorageItem
 	for _, item := range items {
+
+		info, _ := item.Info()
+		info.ModTime()
 		if item.IsDir() {
-			files = append(files, item.Name()+"/")
-		}
-	}
+			count := s.getDirectoryItemCount(dirPath + "/" + item.Name())
+			directorySize, err := s.getDirSize(dirPath + "/" + item.Name())
 
-	for _, item := range items {
+			if err != nil {
+				return nil, err
+			}
+
+			directoryFiles = append(directoryFiles, models.StorageItem{
+				Size:        directorySize,
+				Name:        item.Name(),
+				UpdatedAt:   info.ModTime(),
+				Type:        1,
+				IsDirectory: true,
+				ItemsCount:  count,
+			})
+		}
+
 		if !item.IsDir() {
-			files = append(files, item.Name())
+
+			directoryFiles = append(directoryFiles, models.StorageItem{
+				Size:        info.Size(),
+				Name:        item.Name(),
+				UpdatedAt:   info.ModTime(),
+				Type:        2,
+				IsDirectory: false,
+				ItemsCount:  0,
+			})
 		}
+
 	}
 
-	return files, nil
+	return directoryFiles, nil
+}
+
+func (s *StorageController) getDirectoryItemCount(directory string) int {
+	items, _ := os.ReadDir(directory)
+	var count int
+	for range items {
+
+		count++
+	}
+	return count
+}
+
+func (s *StorageController) getDirSize(dirPath string) (int64, error) {
+	var size int64
+
+	// Walk through the directory and sum up file sizes
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		size += info.Size()
+		return nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	return size, nil
 }
 
 func (s *StorageController) Init(r *gin.RouterGroup, m *middlewhere.AuthenticationMiddlewhere) {
 	controller := r.Group("storage")
 
-	controller.Use(m.Authorize())
+	// controller.Use(m.Authorize())
 
 	controller.POST("upload", s.upload)
 	controller.GET("download/:filename", s.download)
 	controller.GET("stream/:filename", s.stream)
 	controller.GET("path/:directory", s.path)
+	controller.GET("", s.path)
 }

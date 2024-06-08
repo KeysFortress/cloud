@@ -9,5 +9,6 @@
     "ssl": true,
     "smtp": "smtp://",
     "smtp-port": 2225,
-    "FirebaseServerKey": "/home/kristifor/projects/KF/keysfortress-c73b0-a5f3df6879be.json"
+    "FirebaseServerKey": "/home/kristifor/projects/KF/keysfortress-c73b0-a5f3df6879be.json",
+    "storage": "/home/kristifor/projects"
 }
