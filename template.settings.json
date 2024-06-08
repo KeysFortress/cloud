@@ -1,0 +1,13 @@
+{
+    "ConnectionString": "postgres://postgres:1234@localhost:5432/keysfortress?sslmode=disable",
+    "jwt-key": "ebMRsLYm34aTZ5IjfyhM70Yp0ZUjE3h6XZq+5js/bf4=",
+    "jwt-issuer": "Collaborativesoft",
+    "Port": ":8080",
+    "domain": "https://kristifor.kidswlan.de",
+    "from": "support@keysfortress.net",
+    "smtp-password": "1234",
+    "ssl": true,
+    "smtp": "smtp://",
+    "smtp-port": 2225,
+    "FirebaseServerKey": "/home/kristifor/projects/KF/keysfortress-c73b0-a5f3df6879be.json"
+}

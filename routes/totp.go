@@ -22,8 +22,9 @@ type TotpController struct {
 
 func (tc *TotpController) all(ctx *gin.Context) {
 	tc.TotpRepository.Storage.Open()
+	defer tc.TotpRepository.Storage.Close()
+
 	all, err := tc.TotpRepository.All()
-	tc.TotpRepository.Storage.Close()
 
 	if err != nil {
 		fmt.Println(err)
@@ -46,8 +47,9 @@ func (tc *TotpController) content(ctx *gin.Context) {
 	}
 
 	tc.TotpRepository.Storage.Open()
+	defer tc.TotpRepository.Storage.Close()
+
 	secret, err := tc.TotpRepository.Content(id)
-	tc.TotpRepository.Storage.Close()
 
 	if err != nil {
 		fmt.Println(err)
@@ -60,8 +62,9 @@ func (tc *TotpController) content(ctx *gin.Context) {
 
 func (tc *TotpController) types(ctx *gin.Context) {
 	tc.TotpRepository.Storage.Open()
+	defer tc.TotpRepository.Storage.Close()
+
 	types, err := tc.TotpRepository.GetCodeTypes()
-	tc.TotpRepository.Storage.Close()
 
 	if err != nil {
 		fmt.Println(err)
@@ -73,10 +76,10 @@ func (tc *TotpController) types(ctx *gin.Context) {
 }
 
 func (tc *TotpController) algorithms(ctx *gin.Context) {
-
 	tc.TotpRepository.Storage.Open()
+	defer tc.TotpRepository.Storage.Close()
+
 	algorithms, err := tc.TotpRepository.GetAlgorithms()
-	tc.TotpRepository.Storage.Close()
 
 	if err != nil {
 		fmt.Println(err)
@@ -99,12 +102,12 @@ func (tc TotpController) code(ctx *gin.Context) {
 
 	result := "--- ---"
 	tc.TotpRepository.Storage.Open()
+	defer tc.TotpRepository.Storage.Close()
+
 	secret, err := tc.TotpRepository.GetInternal(uuid)
-	tc.TotpRepository.Storage.Close()
 
 	if err != nil {
 		fmt.Println("Record doesn't exist")
-		tc.TotpRepository.Storage.Close()
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
 		return
 	}
@@ -145,9 +148,10 @@ func (tc *TotpController) add(ctx *gin.Context) {
 	}
 
 	tc.TotpRepository.Storage.Open()
+	defer tc.TotpRepository.Storage.Close()
+
 	created, err := tc.TotpRepository.Add(*request)
 	if err != nil {
-		tc.TotpRepository.Storage.Close()
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
 		return
 	}
@@ -159,12 +163,9 @@ func (tc *TotpController) add(ctx *gin.Context) {
 	})
 	if err != nil {
 		fmt.Println("Failed to create event abording")
-		tc.TotpRepository.Storage.Close()
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
 		return
 	}
-
-	tc.TotpRepository.Storage.Close()
 
 	fmt.Println(event)
 	ctx.JSON(http.StatusOK, created)
@@ -182,10 +183,11 @@ func (tc *TotpController) update(ctx *gin.Context) {
 	}
 
 	tc.TotpRepository.Storage.Open()
+	defer tc.TotpRepository.Storage.Close()
+
 	oldPassword, err := tc.TotpRepository.Get(request.Id)
 	if err != nil {
 		fmt.Println("Record doesn't exist")
-		tc.TotpRepository.Storage.Close()
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
 		return
 	}
@@ -194,7 +196,6 @@ func (tc *TotpController) update(ctx *gin.Context) {
 
 	if !updated {
 		fmt.Println("Failed to update entity, aborting")
-		tc.TotpRepository.Storage.Close()
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
 		return
 	}
@@ -208,14 +209,12 @@ func (tc *TotpController) update(ctx *gin.Context) {
 	if err != nil {
 
 		fmt.Println("Entity was updated, but failed to create an event.")
-		tc.TotpRepository.Storage.Close()
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
 
 		return
 	}
 
 	fmt.Println(event)
-	tc.TotpRepository.Storage.Close()
 	ctx.JSON(http.StatusOK, updated)
 }
 

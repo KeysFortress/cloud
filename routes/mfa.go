@@ -43,7 +43,7 @@ func (m *MfaController) setup(ctx *gin.Context) {
 		return
 	}
 
-	secret, err := m.TotpService.GenerateTOTP(account.Email)
+	secret, err := m.TotpService.GenerateTOTP(account.Email, 30, otp.AlgorithmSHA512)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
 		return
@@ -89,7 +89,16 @@ func (m *MfaController) finishSetup(ctx *gin.Context) {
 		return
 	}
 
-	valid, err := m.TotpService.VerifyTOTP(request.Code, request.Secret, 30, otp.AlgorithmMD5)
+	validCode, err := m.TotpService.GenerateTOTPCode(request.Secret, 30, otp.AlgorithmSHA512)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request, failed to validate code"})
+		return
+	}
+
+	fmt.Println("Received code %1 valid code %2", request.Code, validCode)
+
+	valid, err := m.TotpService.VerifyTOTP(request.Code, request.Secret, 30, otp.AlgorithmSHA512)
 
 	if err != nil || !valid {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request, failed to validate code"})
@@ -104,8 +113,9 @@ func (m *MfaController) finishSetup(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Failed to save new secret, aborted operation!"})
 		return
 	}
-
-	token := m.JwtService.IssueToken("user", id.(string), deviceKey.(string))
+	parseId := id.(uuid.UUID).String()
+	parseDeviceId := deviceKey.(string)
+	token := m.JwtService.IssueToken("user", parseId, parseDeviceId)
 	ctx.JSON(http.StatusOK, token)
 }
 
@@ -235,7 +245,7 @@ func (m *MfaController) add(ctx *gin.Context) {
 		return
 	}
 
-	secret, err := m.TotpService.GenerateTOTP(account.Name)
+	secret, err := m.TotpService.GenerateTOTP(account.Name, 30, otp.AlgorithmSHA512)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
 		return

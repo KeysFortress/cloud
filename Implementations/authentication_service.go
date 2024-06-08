@@ -31,6 +31,7 @@ func (authService *AuthenticationService) GetMessage(email *string, id *uuid.UUI
 		Uuid:     uuid.String(),
 		Time:     time.Now().UTC().Add(time.Duration(time.Minute * 10)),
 		Approved: false,
+		Ignore:   false,
 	}
 
 	authService.AuthRequests.LoadOrStore(uuid, authResponse)
@@ -125,19 +126,31 @@ func (authService *AuthenticationService) ExchangeCodeForToken(code uuid.UUID) (
 
 func (authService *AuthenticationService) ExchangeCodeForPublicKey(code uuid.UUID) (string, bool) {
 	request, ok := authService.AuthRequests.Load(code)
-
 	if !ok {
 		return "", false
 	}
 
 	authRequest := request.(dtos.StoredAuthRequest)
-
 	if !authRequest.Approved {
 		return "", true
 	}
 
 	return authRequest.ApprovedKey, true
+}
 
+func (authService *AuthenticationService) GetAuthRequest(id uuid.UUID) (dtos.StoredAuthRequest, error) {
+	request, ok := authService.AuthRequests.Load(id)
+	if !ok {
+		return dtos.StoredAuthRequest{}, errors.New("request id missing")
+	}
+
+	authRequest := request.(dtos.StoredAuthRequest)
+	return authRequest, nil
+}
+
+func (authService *AuthenticationService) StoreAuthRequest(request dtos.StoredAuthRequest) bool {
+	authService.AuthRequests.Store(request.Id, request)
+	return true
 }
 
 func (authService *AuthenticationService) Start() {
@@ -157,7 +170,7 @@ func (authService *AuthenticationService) Start() {
 		authService.AuthRequests.Range(func(key, value any) bool {
 			storedRequest := value.(dtos.StoredAuthRequest)
 			expired := storedRequest.Time.UTC().Before(time.Now().UTC())
-			if expired {
+			if expired && !storedRequest.Ignore {
 				authService.AuthRequests.Delete(key)
 			}
 

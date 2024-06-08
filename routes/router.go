@@ -10,19 +10,31 @@ import (
 )
 
 type ApplicationRouter struct {
-	Configuration   interfaces.Configuration
-	Storage         interfaces.Storage
-	PasswordService interfaces.PasswordService
-	AuthMiddlewhere *middlewhere.AuthenticationMiddlewhere
-	Jwt             interfaces.JwtService
-	V1              *gin.RouterGroup
+	Configuration     interfaces.Configuration
+	Storage           interfaces.Storage
+	PasswordService   interfaces.PasswordService
+	AuthMiddlewhere   *middlewhere.AuthenticationMiddlewhere
+	Jwt               interfaces.JwtService
+	FirebaseMessaging interfaces.FirebaseCloudMessaging
+	V1                *gin.RouterGroup
 }
 
 func (r *ApplicationRouter) Init() {
+	r.FirebaseMessaging.Send()
+	domain := r.Configuration.GetKey("domain")
+	if domain == nil {
+		panic("Domain is not set in the configuration file")
+	}
+
+	authService := &implementations.AuthenticationService{
+		Domain: domain.(string),
+	}
+	go authService.Start()
 
 	authController := &AuthenticationController{
-		JwtService:    r.Jwt,
-		Configuration: r.Configuration,
+		AuthenticationService: authService,
+		JwtService:            r.Jwt,
+		Configuration:         r.Configuration,
 		AccountRepository: repositories.Accounts{
 			Storage: r.Storage,
 		},
@@ -88,6 +100,25 @@ func (r *ApplicationRouter) Init() {
 		},
 		TotpService: &implementations.TimeBasedService{},
 	}
+	setupController := &SetupController{
+		accountRepository: repositories.Accounts{
+			Storage: r.Storage,
+		},
+		accessKeysRepository: repositories.AccessKeysRepository{
+			Storage: r.Storage,
+		},
+		setupPath:             "v1/setup/finish",
+		domain:                r.Configuration.GetKey("domain").(string),
+		authenticationService: authService,
+	}
+	dashboardController := &DashboardController{
+		DashboardRepository: repositories.DashboardRepository{
+			Storage: r.Storage,
+		},
+	}
+	storage := &StorageController{
+		localStorage: r.Configuration.GetKey("storage").(string),
+	}
 
 	authController.Init(r.V1)
 	passwordsController.Init(r.V1, r.AuthMiddlewhere)
@@ -96,4 +127,7 @@ func (r *ApplicationRouter) Init() {
 	eventsController.Init(r.V1, r.AuthMiddlewhere)
 	totpController.Init(r.V1, r.AuthMiddlewhere)
 	mfaController.Init(r.V1, r.AuthMiddlewhere)
+	setupController.Init(r.V1)
+	dashboardController.Init(r.V1, r.AuthMiddlewhere)
+	storage.Init(r.V1, r.AuthMiddlewhere)
 }

@@ -14,4 +14,5 @@ type StoredAuthRequest struct {
 	Time        time.Time
 	Approved    bool
 	ApprovedKey string
+	Ignore      bool
 }
