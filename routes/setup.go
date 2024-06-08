@@ -132,7 +132,7 @@ func (s *SetupController) finish(ctx *gin.Context) {
 		return
 	}
 
-	_, err = s.accessKeysRepository.Add(&id, &initialRequest.ApprovedKey)
+	_, err = s.accessKeysRepository.Add(&id, &initialRequest.ApprovedKey, &request.DeviceName, &request.DeviceType)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
