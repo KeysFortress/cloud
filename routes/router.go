@@ -111,6 +111,11 @@ func (r *ApplicationRouter) Init() {
 		domain:                r.Configuration.GetKey("domain").(string),
 		authenticationService: authService,
 	}
+	dashboardController := &DashboardController{
+		DashboardRepository: repositories.DashboardRepository{
+			Storage: r.Storage,
+		},
+	}
 
 	authController.Init(r.V1)
 	passwordsController.Init(r.V1, r.AuthMiddlewhere)
@@ -120,4 +125,5 @@ func (r *ApplicationRouter) Init() {
 	totpController.Init(r.V1, r.AuthMiddlewhere)
 	mfaController.Init(r.V1, r.AuthMiddlewhere)
 	setupController.Init(r.V1)
+	dashboardController.Init(r.V1, r.AuthMiddlewhere)
 }
