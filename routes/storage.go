@@ -9,10 +9,12 @@ import (
 
 	"leanmeal/api/middlewhere"
 	"leanmeal/api/models"
+	"leanmeal/api/repositories"
 )
 
 type StorageController struct {
-	localStorage string
+	localStorage     string
+	EventsRepository repositories.EventRepository
 }
 
 func (s *StorageController) upload(ctx *gin.Context) {

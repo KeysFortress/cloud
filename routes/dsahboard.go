@@ -12,6 +12,30 @@ import (
 
 type DashboardController struct {
 	DashboardRepository repositories.DashboardRepository
+	EventsRepository    repositories.EventRepository
+}
+
+func (d *DashboardController) monthlyActivity(ctx *gin.Context) {
+	d.EventsRepository.Storage.Open()
+	defer d.EventsRepository.Storage.Close()
+
+	uploads, err := d.EventsRepository.GetByType(12)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Failed to retrive the list of upload events"})
+		return
+	}
+
+	downloads, err := d.EventsRepository.GetByType(13)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Failed to retrive the list of download events"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"Uploads":   uploads,
+		"Downloads": downloads,
+	})
 }
 
 func (d *DashboardController) credentials(ctx *gin.Context) {
@@ -60,6 +84,7 @@ func (d *DashboardController) Init(r *gin.RouterGroup, m *middlewhere.Authentica
 	controller := r.Group("dashboard")
 	controller.Use(m.Authorize())
 
+	controller.GET("monthly-activity", d.monthlyActivity)
 	controller.GET("credentials-data", d.credentials)
 	controller.GET("devices", d.devices)
 	controller.GET("storage", d.storage)

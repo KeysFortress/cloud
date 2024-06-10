@@ -115,9 +115,15 @@ func (r *ApplicationRouter) Init() {
 		DashboardRepository: repositories.DashboardRepository{
 			Storage: r.Storage,
 		},
+		EventsRepository: repositories.EventRepository{
+			Storage: r.Storage,
+		},
 	}
 	storage := &StorageController{
 		localStorage: r.Configuration.GetKey("storage").(string),
+		EventsRepository: repositories.EventRepository{
+			Storage: r.Storage,
+		},
 	}
 
 	authController.Init(r.V1)
