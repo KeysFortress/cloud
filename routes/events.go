@@ -54,11 +54,31 @@ func (ec *EventsController) eventsByType(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, events)
 }
 
+func (ec *EventsController) take(ctx *gin.Context) {
+	request := &dtos.ValueRage{}
+	if err := ctx.BindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
+	ec.EventsRepository.Storage.Open()
+	defer ec.EventsRepository.Storage.Close()
+
+	events, err := ec.EventsRepository.TakeCount(request)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, events)
+}
+
 func (ec *EventsController) Init(r *gin.RouterGroup, authMiddlewhere *middlewhere.AuthenticationMiddlewhere) {
 	controller := r.Group("events")
 	controller.Use(authMiddlewhere.Authorize())
 
 	controller.GET("all", ec.all)
+	controller.POST("take", ec.take)
 	controller.GET("events-by-type/:type", ec.eventsByType)
 	controller.GET("event-types", ec.types)
 	controller.POST("add", ec.add)
