@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 
@@ -34,7 +35,6 @@ func (s *StorageController) upload(ctx *gin.Context) {
 }
 
 func (s *StorageController) download(ctx *gin.Context) {
-
 	filename := ctx.Param("filename")
 	filePath := s.localStorage + filename
 
@@ -64,14 +64,19 @@ func (s *StorageController) stream(ctx *gin.Context) {
 }
 
 func (s *StorageController) path(ctx *gin.Context) {
-	directory := ctx.Param("directory")
+	var directory string
+	if err := ctx.Bind(&directory); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
 	var dirPath string
 	if directory == "" {
 		dirPath = s.localStorage + directory
 	}
 
 	if directory != "" {
-		dirPath = s.localStorage + directory
+		dirPath = directory
 	}
 
 	dirInfo, err := os.Stat(dirPath)
@@ -86,51 +91,65 @@ func (s *StorageController) path(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"directory": directory, "files": files})
+	ctx.JSON(http.StatusOK, files)
 }
 
 func (s *StorageController) listFiles(dirPath string) ([]models.StorageItem, error) {
-
 	items, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, err
 	}
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
 	var directoryFiles []models.StorageItem
+
 	for _, item := range items {
+		wg.Add(1)
+		go func(item os.DirEntry) {
+			defer wg.Done()
 
-		info, _ := item.Info()
-		info.ModTime()
-		if item.IsDir() {
-			count := s.getDirectoryItemCount(dirPath + "/" + item.Name())
-			directorySize, err := s.getDirSize(dirPath + "/" + item.Name())
-
+			info, err := item.Info()
 			if err != nil {
-				return nil, err
+
+				return
 			}
 
-			directoryFiles = append(directoryFiles, models.StorageItem{
-				Size:        directorySize,
-				Name:        item.Name(),
-				UpdatedAt:   info.ModTime(),
-				Type:        1,
-				IsDirectory: true,
-				ItemsCount:  count,
-			})
-		}
+			if item.IsDir() {
+				subDirPath := filepath.Join(dirPath, item.Name())
+				count := s.getDirectoryItemCount(subDirPath)
+				directorySize, err := s.getDirSize(subDirPath)
+				if err != nil {
+					return
+				}
 
-		if !item.IsDir() {
-
-			directoryFiles = append(directoryFiles, models.StorageItem{
-				Size:        info.Size(),
-				Name:        item.Name(),
-				UpdatedAt:   info.ModTime(),
-				Type:        2,
-				IsDirectory: false,
-				ItemsCount:  0,
-			})
-		}
-
+				mu.Lock()
+				directoryFiles = append(directoryFiles, models.StorageItem{
+					Size:         directorySize,
+					Name:         item.Name(),
+					UpdatedAt:    info.ModTime(),
+					Type:         1,
+					IsDirectory:  true,
+					ItemsCount:   count,
+					AbsolutePath: subDirPath,
+				})
+				mu.Unlock()
+			} else {
+				mu.Lock()
+				directoryFiles = append(directoryFiles, models.StorageItem{
+					Size:        info.Size(),
+					Name:        item.Name(),
+					UpdatedAt:   info.ModTime(),
+					Type:        2,
+					IsDirectory: false,
+					ItemsCount:  0,
+				})
+				mu.Unlock()
+			}
+		}(item)
 	}
+
+	wg.Wait()
 
 	return directoryFiles, nil
 }
@@ -172,6 +191,6 @@ func (s *StorageController) Init(r *gin.RouterGroup, m *middlewhere.Authenticati
 	controller.POST("upload", s.upload)
 	controller.GET("download/:filename", s.download)
 	controller.GET("stream/:filename", s.stream)
-	controller.GET("path/:directory", s.path)
+	controller.POST("path", s.path)
 	controller.GET("", s.path)
 }
