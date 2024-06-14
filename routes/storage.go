@@ -35,16 +35,22 @@ func (s *StorageController) upload(ctx *gin.Context) {
 }
 
 func (s *StorageController) download(ctx *gin.Context) {
-	filename := ctx.Param("filename")
-	filePath := s.localStorage + filename
 
-	_, err := os.Stat(filePath)
+	var filePath string
+	if err := ctx.Bind(&filePath); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "Bad Request"})
+		return
+	}
+
+	file, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
 		return
 	}
 
-	ctx.Header("Content-Disposition", "attachment; filename="+filename)
+	name := file.Name()
+
+	ctx.Header("Content-Disposition", "attachment; filename="+name)
 	ctx.Header("Content-Type", "application/octet-stream")
 	ctx.File(filePath)
 }
@@ -136,13 +142,16 @@ func (s *StorageController) listFiles(dirPath string) ([]models.StorageItem, err
 				mu.Unlock()
 			} else {
 				mu.Lock()
+				subDirPath := filepath.Join(dirPath, item.Name())
+
 				directoryFiles = append(directoryFiles, models.StorageItem{
-					Size:        info.Size(),
-					Name:        item.Name(),
-					UpdatedAt:   info.ModTime(),
-					Type:        2,
-					IsDirectory: false,
-					ItemsCount:  0,
+					Size:         info.Size(),
+					Name:         item.Name(),
+					UpdatedAt:    info.ModTime(),
+					Type:         2,
+					IsDirectory:  false,
+					ItemsCount:   0,
+					AbsolutePath: subDirPath,
 				})
 				mu.Unlock()
 			}
@@ -189,7 +198,7 @@ func (s *StorageController) Init(r *gin.RouterGroup, m *middlewhere.Authenticati
 	// controller.Use(m.Authorize())
 
 	controller.POST("upload", s.upload)
-	controller.GET("download/:filename", s.download)
+	controller.POST("download", s.download)
 	controller.GET("stream/:filename", s.stream)
 	controller.POST("path", s.path)
 	controller.GET("", s.path)
