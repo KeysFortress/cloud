@@ -19,18 +19,24 @@ type StorageController struct {
 }
 
 func (s *StorageController) upload(ctx *gin.Context) {
-	file, err := ctx.FormFile("file")
+	err := ctx.Request.ParseMultipartForm(10 * 1024 * 1024)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.String(http.StatusBadRequest, "Error parsing multipart form: %v", err)
 		return
 	}
 
-	err = ctx.SaveUploadedFile(file, s.localStorage+file.Filename)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
-		return
-	}
+	files := ctx.Request.MultipartForm.File["file"]
+	for file := range files {
+		path := ctx.Request.FormValue("path")
+		currentFile := files[file]
 
+		err = ctx.SaveUploadedFile(currentFile, path+currentFile.Filename)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+			return
+		}
+
+	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "File uploaded successfully"})
 }
 
