@@ -7,6 +7,10 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/mem"
 
 	"leanmeal/api/middlewhere"
 	"leanmeal/api/models"
@@ -198,6 +202,23 @@ func (s *StorageController) getDirSize(dirPath string) (int64, error) {
 	return size, nil
 }
 
+func (s *StorageController) info(ctx *gin.Context) {
+	hostStat, _ := host.Info()
+	cpuStat, _ := cpu.Info()
+	vmStat, _ := mem.VirtualMemory()
+	diskStat, _ := disk.Usage("/")
+	info := new(models.SysInfo)
+
+	info.Hostname = hostStat.Hostname
+	info.Platform = hostStat.Platform
+	info.CPU = cpuStat[0].ModelName
+	info.RAM = vmStat.Total / 1024 / 1024
+	info.Disk = diskStat.Total / 1024 / 1024
+	info.Free = diskStat.Free / 1024 / 1024
+
+	ctx.JSON(http.StatusOK, info)
+}
+
 func (s *StorageController) Init(r *gin.RouterGroup, m *middlewhere.AuthenticationMiddlewhere) {
 	controller := r.Group("storage")
 
@@ -205,7 +226,8 @@ func (s *StorageController) Init(r *gin.RouterGroup, m *middlewhere.Authenticati
 
 	controller.POST("upload", s.upload)
 	controller.POST("download", s.download)
-	controller.GET("stream/:filename", s.stream)
 	controller.POST("path", s.path)
+	controller.GET("stream/:filename", s.stream)
 	controller.GET("", s.path)
+	controller.GET("info", s.info)
 }
